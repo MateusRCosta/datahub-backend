@@ -22,6 +22,10 @@ export enum OPERADOR_WHERE {
   OR = 'or',
 }
 
+export enum TIPO_FILTRO {
+  FILTER = 'filter',
+  GROUP = 'group',
+}
 export type QueryView = {
   from: From;
   joins?: Join[];
@@ -58,12 +62,12 @@ export type Filter = {
 export type GroupFilter = GroupNode | FilterNode;
 
 export type GroupNode = {
-  type: 'group';
+  type: TIPO_FILTRO.GROUP;
   operadorWhere: OPERADOR_WHERE; // obrigatório quando é grupo
   groupFilter: GroupFilter[]; // obrigatório quando é grupo
 };
 
 export type FilterNode = {
-  type: 'filter';
+  type: TIPO_FILTRO.FILTER;
   filter: Filter; // obrigatório quando é folha
 };

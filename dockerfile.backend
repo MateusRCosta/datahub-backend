@@ -1,10 +1,6 @@
 FROM node:24-alpine AS build
 
 WORKDIR /usr/src/app
-ENV NODE_OPTIONS=--max-old-space-size=512
-ENV NPM_CONFIG_AUDIT=false
-ENV NPM_CONFIG_FUND=false
-ENV NPM_CONFIG_PROGRESS=false
 
 COPY package*.json ./
 RUN npm ci
@@ -23,8 +19,6 @@ RUN npm prune --omit=dev
 
 FROM node:24-alpine AS production
 
-ENV NODE_ENV=production
-ENV NODE_OPTIONS=--max-old-space-size=512
 WORKDIR /usr/src/app
 
 COPY --from=production-deps /usr/src/app/package*.json ./

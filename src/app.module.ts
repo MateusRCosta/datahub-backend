@@ -9,6 +9,7 @@ import { ClientesModule } from './cliente/cliente.module';
 import { IntegracaoModule } from './integracao/integracao.module';
 import { IntegracaoCampanhaModule } from './integracao-campanha/integracao-campanha.module';
 import { ViewModule } from './view/view.module';
+import { TemplateModule } from './template/template.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { ViewModule } from './view/view.module';
     IntegracaoModule,
     IntegracaoCampanhaModule,
     ViewModule,
+    TemplateModule,
   ],
 })
 export class AppModule {}

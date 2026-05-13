@@ -96,7 +96,7 @@ export function normalizaDadosCliente(
       validacao.push({
         nome: nomeCampo,
         vazio: true,
-        validado: campo.obrigatorio ? false : true,
+        validado: false,
       });
       continue;
     }

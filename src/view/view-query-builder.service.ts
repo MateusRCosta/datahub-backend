@@ -16,6 +16,7 @@ import {
   OPERADOR_WHERE,
   QueryView,
   Select,
+  TIPO_FILTRO,
   TIPO_JOIN,
 } from './types/view.types';
 
@@ -95,7 +96,7 @@ export class ViewQueryBuilderService {
       );
     }
 
-    if (groupFilter.type !== 'group') {
+    if (groupFilter.type !== TIPO_FILTRO.GROUP) {
       return;
     }
 
@@ -299,7 +300,7 @@ export class ViewQueryBuilderService {
       );
     }
 
-    if (groupFilter.type === 'filter') {
+    if (groupFilter.type === TIPO_FILTRO.FILTER) {
       return this.buildFilter(groupFilter.filter, ctx);
     }
 

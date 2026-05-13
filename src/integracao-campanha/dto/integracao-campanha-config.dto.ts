@@ -9,7 +9,11 @@ import {
   MaxLength,
   Min,
 } from 'class-validator';
-import { ProvedorIntegracaoCampanha } from '../types/provedor-integracao-campanha.type';
+import {
+  IntegracaoCampanhaComProvedor,
+  IntegracaoCampanhaConfigType,
+  ProvedorIntegracaoCampanha,
+} from '../types/provedor-integracao-campanha.type';
 
 export class UpchatConfigDto {
   @IsString()
@@ -38,21 +42,6 @@ export class DisparoProConfigDto {
   @IsString()
   @MaxLength(128)
   readonly api_key!: string;
-}
-
-export type IntegracaoCampanhaConfigDto =
-  | UpchatConfigDto
-  | EmailConfigDto
-  | DisparoProConfigDto;
-
-type IntegracaoCampanhaConfigType =
-  | typeof UpchatConfigDto
-  | typeof EmailConfigDto
-  | typeof DisparoProConfigDto
-  | typeof Object;
-
-interface IntegracaoCampanhaComProvedor {
-  provedor?: ProvedorIntegracaoCampanha;
 }
 
 export function getIntegracaoCampanhaConfigType(
