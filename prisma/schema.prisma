@@ -1,0 +1,212 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Usuario {
+  id          Int           @id @default(autoincrement()) @db.Integer
+  nome        String        @db.VarChar(120)
+  email       String        @unique @db.VarChar(120)
+  senha       String        @db.VarChar(255)
+  permissoes  Json?         @db.JsonB
+  admin       Boolean       @default(false) @db.Boolean
+  ativo       Boolean       @default(true) @db.Boolean
+  createdAt   DateTime      @default(now()) @db.Timestamptz()
+  updatedAt   DateTime?     @db.Timestamptz()
+  deletedAt   DateTime?     @db.Timestamptz()
+  baseDeDados BaseDeDados[]
+  sessao      Sessao[]
+  integracao  Integracao[]
+
+  @@map("usuarios")
+}
+
+model Sessao {
+  id        Int       @id @default(autoincrement()) @db.Integer
+  sid       String    @unique @db.Uuid
+  dados     Json      @db.JsonB
+  createdAt DateTime  @default(now()) @db.Timestamptz()
+  expiredAt DateTime? @db.Timestamptz()
+  revokedAt DateTime? @db.Timestamptz()
+  usuarioId Int       @db.Integer
+
+  usuario Usuario @relation(fields: [usuarioId], references: [id])
+
+  @@map("sessoes")
+}
+
+model BaseDeDados {
+  id           Int       @id @default(autoincrement()) @db.Integer
+  nome         String    @db.VarChar(60)
+  estrutura    Json      @db.JsonB
+  createdAt    DateTime  @default(now()) @db.Timestamptz()
+  updatedAt    DateTime? @db.Timestamptz()
+  deletedAt    DateTime? @db.Timestamptz()
+  usuarioId    Int?      @db.Integer
+  integracaoId Int?      @db.Integer()
+
+  usuario    Usuario?    @relation(fields: [usuarioId], references: [id])
+  integracao Integracao? @relation(fields: [integracaoId], references: [id])
+
+  clientes  Cliente[]
+  campanhas Campanha[]
+
+  @@map("basesDeDados")
+}
+
+model Cliente {
+  id            Int       @id @default(autoincrement()) @db.Integer
+  dados         Json      @db.JsonB
+  validacao     Json?     @db.JsonB
+  hash          String    @db.VarChar(64)
+  createdAt     DateTime  @default(now()) @db.Timestamptz()
+  updatedAt     DateTime? @db.Timestamptz()
+  deletedAt     DateTime? @db.Timestamptz()
+  baseDeDadosId Int       @db.Integer
+
+  baseDeDados BaseDeDados @relation(fields: [baseDeDadosId], references: [id])
+
+  @@map("clientes")
+}
+
+model Integracao {
+  id                      Int     @id @default(autoincrement()) @db.Integer
+  nome                    String  @db.VarChar(100)
+  limitDeRequisicaoPorMin Int     @db.Integer()
+  horaExecucao            Int     @default(0) @db.SmallInt()
+  status                  Boolean @default(false) @db.Boolean
+
+  // auth
+  urlAuth       String? @db.VarChar(200)
+  metodoAuth    String? @default("POST") @db.VarChar(20)
+  headersAuth   Json?   @db.JsonB
+  variaveisAuth Json?   @db.JsonB
+  bodyAuth      String? @db.Text
+  responseAuth  Json?   @db.JsonB
+
+  //refresh
+  urlRefresh       String? @db.VarChar(200)
+  metodoRefresh    String? @default("POST") @db.VarChar(20)
+  headersRefresh   Json?   @db.JsonB
+  variaveisRefresh Json?   @db.JsonB
+  bodyRefresh      String? @db.Text
+  responseRefresh  Json?   @db.JsonB
+
+  // scrap
+  urlScrap       String  @db.VarChar(200)
+  metodoScrap    String  @default("GET") @db.VarChar(20)
+  headersScrap   Json?   @db.JsonB
+  variaveisScrap Json?   @db.JsonB
+  bodyScrap      String? @db.Text
+  responseScrap  Json    @db.JsonB
+
+  createdAt DateTime  @default(now()) @db.Timestamptz()
+  updatedAt DateTime? @db.Timestamptz()
+  deletedAt DateTime? @db.Timestamptz()
+
+  usuarioId Int     @db.Integer
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
+  baseDeDados BaseDeDados[]
+  jobs        Job[]
+
+  @@map("integracoes")
+}
+
+model IntegracaoCampanha {
+  id        Int       @id @default(autoincrement()) @db.Integer
+  nome      String    @db.VarChar(100)
+  status    Boolean   @default(false) @db.Boolean
+  provedor  String    @db.VarChar(50)
+  config    Json      @db.JsonB
+  createdAt DateTime  @default(now()) @db.Timestamptz()
+  updatedAt DateTime? @db.Timestamptz()
+  deletedAt DateTime? @db.Timestamptz()
+
+  template Template[]
+
+  @@map("integracaoCampanha")
+}
+
+model Job {
+  id          Int       @id @default(autoincrement()) @db.Integer
+  status      String    @db.VarChar(20) // pendente, rodando, completo, erro
+  tipo        String    @db.VarChar(20) // cliente, campanha
+  scheduledAt DateTime  @db.Timestamptz()
+  executedAt  DateTime? @db.Timestamptz()
+  finishedAt  DateTime? @db.Timestamptz()
+  createdAt   DateTime  @default(now()) @db.Timestamptz()
+
+  integracaoId Int        @db.Integer
+  integracao   Integracao @relation(fields: [integracaoId], references: [id])
+
+  @@map("jobs")
+}
+
+model View {
+  id        Int       @id @default(autoincrement()) @db.Integer
+  nome      String    @db.VarChar(100)
+  descricao String?    @db.VarChar(256)
+  config    Json      @db.JsonB
+  createdAt DateTime  @default(now()) @db.Timestamptz()
+  updatedAt DateTime? @db.Timestamptz()
+  deletedAt DateTime? @db.Timestamptz()
+
+  campanhas Campanha[]
+
+  @@map("views")
+}
+
+model Template {
+  id        Int       @id @default(autoincrement()) @db.Integer
+  nome      String    @db.VarChar(100)
+  config    Json      @db.JsonB
+  createdAt DateTime  @default(now()) @db.Timestamptz()
+  updatedAt DateTime? @db.Timestamptz()
+  deletedAt DateTime? @db.Timestamptz()
+  provedor  String    @db.VarChar(30)
+
+  integracaoCampanhaId Int                @db.Integer
+  integracaoCampanha   IntegracaoCampanha @relation(fields: [integracaoCampanhaId], references: [id])
+
+  campanhas Campanha[]
+
+  @@map("templates")
+}
+
+model Campanha {
+  id     Int    @id @default(autoincrement()) @db.Integer
+  nome   String @db.VarChar(100)
+  status String @db.VarChar(10) // enviado, em envio, pausa, cancelado, nao_enviado
+
+  createdAt DateTime  @default(now()) @db.Timestamptz()
+  updatedAt DateTime? @db.Timestamptz()
+  deletedAt DateTime? @db.Timestamptz()
+
+  scheduledAt DateTime  @db.Timestamptz()
+  executedAt  DateTime? @db.Timestamptz()
+  finishedAt  DateTime? @db.Timestamptz()
+
+  view   View? @relation(fields: [viewId], references: [id])
+  viewId Int?  @db.Integer
+
+  baseDeDado   BaseDeDados? @relation(fields: [baseDeDadoId], references: [id])
+  baseDeDadoId Int?         @db.Integer
+
+  template   Template @relation(fields: [templateId], references: [id])
+  templateId Int      @db.Integer
+
+  @@map("campanhas")
+}
+
+model cache {
+  chave     String    @id @db.VarChar(255)
+  dados     Json      @db.JsonB
+  expiresAt DateTime? @db.Timestamptz()
+  createdAt DateTime  @default(now()) @db.Timestamptz()
+
+  @@index([expiresAt])
+}
