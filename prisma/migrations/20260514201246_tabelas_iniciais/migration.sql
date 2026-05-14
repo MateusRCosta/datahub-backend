@@ -89,7 +89,7 @@ CREATE TABLE "integracoes" (
 );
 
 -- CreateTable
-CREATE TABLE "integracaoCampanha" (
+CREATE TABLE "integracoesCampanhas" (
     "id" SERIAL NOT NULL,
     "nome" VARCHAR(100) NOT NULL,
     "status" BOOLEAN NOT NULL DEFAULT false,
@@ -99,7 +99,7 @@ CREATE TABLE "integracaoCampanha" (
     "updatedAt" TIMESTAMPTZ,
     "deletedAt" TIMESTAMPTZ,
 
-    CONSTRAINT "integracaoCampanha_pkey" PRIMARY KEY ("id")
+    CONSTRAINT "integracoesCampanhas_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -137,7 +137,6 @@ CREATE TABLE "templates" (
     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMPTZ,
     "deletedAt" TIMESTAMPTZ,
-    "provedor" VARCHAR(30) NOT NULL,
     "integracaoCampanhaId" INTEGER NOT NULL,
 
     CONSTRAINT "templates_pkey" PRIMARY KEY ("id")
@@ -147,10 +146,13 @@ CREATE TABLE "templates" (
 CREATE TABLE "campanhas" (
     "id" SERIAL NOT NULL,
     "nome" VARCHAR(100) NOT NULL,
-    "status" VARCHAR(10) NOT NULL,
+    "status" VARCHAR(25) NOT NULL DEFAULT 'naoEnviado',
+    "vars" JSONB NOT NULL,
+    "contatoCampo" VARCHAR(120) NOT NULL,
     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMPTZ,
     "deletedAt" TIMESTAMPTZ,
+    "lockedAt" TIMESTAMPTZ,
     "scheduledAt" TIMESTAMPTZ NOT NULL,
     "executedAt" TIMESTAMPTZ,
     "finishedAt" TIMESTAMPTZ,
@@ -159,6 +161,18 @@ CREATE TABLE "campanhas" (
     "templateId" INTEGER NOT NULL,
 
     CONSTRAINT "campanhas_pkey" PRIMARY KEY ("id")
+);
+
+-- CreateTable
+CREATE TABLE "clientesCampanhas" (
+    "id" SERIAL NOT NULL,
+    "status" VARCHAR(25) NOT NULL DEFAULT 'naoEnviado',
+    "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    "updatedAt" TIMESTAMPTZ,
+    "campanhaId" INTEGER NOT NULL,
+    "clienteId" INTEGER NOT NULL,
+
+    CONSTRAINT "clientesCampanhas_pkey" PRIMARY KEY ("id")
 );
 
 -- CreateTable
@@ -176,6 +190,21 @@ CREATE UNIQUE INDEX "usuarios_email_key" ON "usuarios"("email");
 
 -- CreateIndex
 CREATE UNIQUE INDEX "sessoes_sid_key" ON "sessoes"("sid");
+
+-- CreateIndex
+CREATE INDEX "campanhas_status_scheduledAt_deletedAt_idx" ON "campanhas"("status", "scheduledAt", "deletedAt");
+
+-- CreateIndex
+CREATE INDEX "campanhas_lockedAt_idx" ON "campanhas"("lockedAt");
+
+-- CreateIndex
+CREATE INDEX "clientesCampanhas_campanhaId_status_idx" ON "clientesCampanhas"("campanhaId", "status");
+
+-- CreateIndex
+CREATE INDEX "clientesCampanhas_clienteId_idx" ON "clientesCampanhas"("clienteId");
+
+-- CreateIndex
+CREATE UNIQUE INDEX "clientesCampanhas_campanhaId_clienteId_key" ON "clientesCampanhas"("campanhaId", "clienteId");
 
 -- CreateIndex
 CREATE INDEX "cache_expiresAt_idx" ON "cache"("expiresAt");
@@ -199,7 +228,7 @@ ALTER TABLE "integracoes" ADD CONSTRAINT "integracoes_usuarioId_fkey" FOREIGN KE
 ALTER TABLE "jobs" ADD CONSTRAINT "jobs_integracaoId_fkey" FOREIGN KEY ("integracaoId") REFERENCES "integracoes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "templates" ADD CONSTRAINT "templates_integracaoCampanhaId_fkey" FOREIGN KEY ("integracaoCampanhaId") REFERENCES "integracaoCampanha"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+ALTER TABLE "templates" ADD CONSTRAINT "templates_integracaoCampanhaId_fkey" FOREIGN KEY ("integracaoCampanhaId") REFERENCES "integracoesCampanhas"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "campanhas" ADD CONSTRAINT "campanhas_viewId_fkey" FOREIGN KEY ("viewId") REFERENCES "views"("id") ON DELETE SET NULL ON UPDATE CASCADE;
@@ -209,3 +238,9 @@ ALTER TABLE "campanhas" ADD CONSTRAINT "campanhas_baseDeDadoId_fkey" FOREIGN KEY
 
 -- AddForeignKey
 ALTER TABLE "campanhas" ADD CONSTRAINT "campanhas_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "templates"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "clientesCampanhas" ADD CONSTRAINT "clientesCampanhas_campanhaId_fkey" FOREIGN KEY ("campanhaId") REFERENCES "campanhas"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "clientesCampanhas" ADD CONSTRAINT "clientesCampanhas_clienteId_fkey" FOREIGN KEY ("clienteId") REFERENCES "clientes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

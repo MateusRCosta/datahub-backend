@@ -1,3 +1,5 @@
+import { Prisma } from '@prisma/client';
+
 export enum TIPO_JOIN {
   INNER = 'INNER',
 }
@@ -70,4 +72,19 @@ export type GroupNode = {
 export type FilterNode = {
   type: TIPO_FILTRO.FILTER;
   filter: Filter; // obrigatório quando é folha
+};
+
+export type ViewListItem = {
+  id: number;
+  nome: string;
+  createdAt: Date;
+  updatedAt: Date | null;
+};
+
+export type ViewDetails = ViewListItem & {
+  config: Prisma.JsonValue;
+};
+
+export type ViewRowWithClienteId = Record<string, unknown> & {
+  readonly _clienteId: number;
 };

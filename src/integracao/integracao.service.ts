@@ -19,15 +19,15 @@ import {
 import { IntegracaoCreateDto } from './dto/integracao-create-dto';
 import { IntegracaoFindAllQueryDto } from './dto/integracao-find-all-query.dto';
 import { IntegracaoUpdateDto } from './dto/integracao-update-dto';
-import { IntegracoesJobService } from './integracao-job.service';
 import { STATUS_JOB } from './types/integracoes-execucao.type';
+import { IntegracaoSchedularService } from './integracao-schedular.service';
 
 @Injectable()
 export class IntegracaoService {
   constructor(
     private prismaService: PrismaService,
     private integracaoExecucaoService: IntegracaoExecucaoService,
-    private integracoesJobService: IntegracoesJobService,
+    private integracaoSchedularService: IntegracaoSchedularService,
   ) {}
 
   async findAll(query: IntegracaoFindAllQueryDto) {
@@ -184,7 +184,7 @@ export class IntegracaoService {
       );
 
       if (horarioMudou && integracao.status) {
-        await this.integracoesJobService.aplicaAgendamentoPorStatus(
+        await this.integracaoSchedularService.aplicaAgendamentoPorStatus(
           {
             ...integracao,
             horaExecucao: dto.horaExecucao,
@@ -207,7 +207,7 @@ export class IntegracaoService {
 
       const integracao =
         await this.buscaIntegracaoNaoDeletadaOuFalha(idIntegracao);
-      await this.integracoesJobService.aplicaAgendamentoPorStatus(
+      await this.integracaoSchedularService.aplicaAgendamentoPorStatus(
         integracao,
         false,
       );
@@ -251,7 +251,7 @@ export class IntegracaoService {
         throw new NotFoundException('Integracao nao encontrada ou ja deletada');
       }
 
-      await this.integracoesJobService.aplicaAgendamentoPorStatus(
+      await this.integracaoSchedularService.aplicaAgendamentoPorStatus(
         { id: idIntegracao, horaExecucao: resultado[0].horaExecucao },
         alteraStatus.status,
       );
@@ -279,7 +279,7 @@ export class IntegracaoService {
         data: { status: true },
       });
 
-      await this.integracoesJobService.aplicaAgendamentoPorStatus(
+      await this.integracaoSchedularService.aplicaAgendamentoPorStatus(
         integracaoAtiva,
         integracaoAtiva.status,
       );
@@ -310,12 +310,15 @@ export class IntegracaoService {
     try {
       await this.integracaoExecucaoService.executaIntegracao(integracao);
 
-      await this.integracoesJobService.atualizaStatus(
+      await this.integracaoSchedularService.atualizaStatus(
         jobId,
         STATUS_JOB.COMPLETO,
       );
     } catch (error: unknown) {
-      await this.integracoesJobService.atualizaStatus(jobId, STATUS_JOB.ERRO);
+      await this.integracaoSchedularService.atualizaStatus(
+        jobId,
+        STATUS_JOB.ERRO,
+      );
 
       throw error;
     }

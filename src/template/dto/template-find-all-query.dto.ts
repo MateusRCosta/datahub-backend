@@ -1,6 +1,5 @@
 import { Type } from 'class-transformer';
 import {
-  IsBoolean,
   IsEnum,
   IsInt,
   IsOptional,
@@ -8,25 +7,25 @@ import {
   MaxLength,
 } from 'class-validator';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
-import { PROVEDOR_INTEGRACAO_CAMPANHA } from '../types/provedor-integracao-campanha.type';
+import { PROVEDOR_INTEGRACAO_CAMPANHA } from 'src/integracao-campanha/types/provedor-integracao-campanha.type';
 
-export class IntegracaoCampanhaFindAllQueryDto extends PaginationQueryDto {
+export class TemplateFindAllQueryDto extends PaginationQueryDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
   readonly id?: number;
 
-  @MaxLength(120)
-  @IsString()
   @IsOptional()
-  readonly nome!: string;
+  @MaxLength(100)
+  @IsString()
+  readonly nome?: string;
 
   @IsOptional()
   @IsEnum(PROVEDOR_INTEGRACAO_CAMPANHA)
   readonly provedor?: PROVEDOR_INTEGRACAO_CAMPANHA;
 
   @IsOptional()
-  @Type(() => Boolean)
-  @IsBoolean()
-  readonly status?: boolean;
+  @Type(() => Number)
+  @IsInt()
+  readonly integracaoCampanhaId?: number;
 }

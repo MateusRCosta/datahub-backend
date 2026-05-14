@@ -67,7 +67,8 @@ model Cliente {
   deletedAt     DateTime? @db.Timestamptz()
   baseDeDadosId Int       @db.Integer
 
-  baseDeDados BaseDeDados @relation(fields: [baseDeDadosId], references: [id])
+  baseDeDados      BaseDeDados       @relation(fields: [baseDeDadosId], references: [id])
+  clienteCampanhas ClienteCampanha[]
 
   @@map("clientes")
 }
@@ -128,7 +129,7 @@ model IntegracaoCampanha {
 
   template Template[]
 
-  @@map("integracaoCampanha")
+  @@map("integracoesCampanhas")
 }
 
 model Job {
@@ -149,7 +150,7 @@ model Job {
 model View {
   id        Int       @id @default(autoincrement()) @db.Integer
   nome      String    @db.VarChar(100)
-  descricao String?    @db.VarChar(256)
+  descricao String?   @db.VarChar(256)
   config    Json      @db.JsonB
   createdAt DateTime  @default(now()) @db.Timestamptz()
   updatedAt DateTime? @db.Timestamptz()
@@ -167,7 +168,6 @@ model Template {
   createdAt DateTime  @default(now()) @db.Timestamptz()
   updatedAt DateTime? @db.Timestamptz()
   deletedAt DateTime? @db.Timestamptz()
-  provedor  String    @db.VarChar(30)
 
   integracaoCampanhaId Int                @db.Integer
   integracaoCampanha   IntegracaoCampanha @relation(fields: [integracaoCampanhaId], references: [id])
@@ -178,13 +178,16 @@ model Template {
 }
 
 model Campanha {
-  id     Int    @id @default(autoincrement()) @db.Integer
-  nome   String @db.VarChar(100)
-  status String @db.VarChar(10) // enviado, em envio, pausa, cancelado, nao_enviado
+  id           Int    @id @default(autoincrement()) @db.Integer
+  nome         String @db.VarChar(100)
+  status       String @default("naoEnviado") @db.VarChar(25)
+  vars         Json   @db.JsonB
+  contatoCampo String @db.VarChar(120)
 
   createdAt DateTime  @default(now()) @db.Timestamptz()
   updatedAt DateTime? @db.Timestamptz()
   deletedAt DateTime? @db.Timestamptz()
+  lockedAt  DateTime? @db.Timestamptz()
 
   scheduledAt DateTime  @db.Timestamptz()
   executedAt  DateTime? @db.Timestamptz()
@@ -199,7 +202,29 @@ model Campanha {
   template   Template @relation(fields: [templateId], references: [id])
   templateId Int      @db.Integer
 
+  clienteCampanhas ClienteCampanha[]
+
+  @@index([status, scheduledAt, deletedAt])
+  @@index([lockedAt])
   @@map("campanhas")
+}
+
+model ClienteCampanha {
+  id        Int       @id @default(autoincrement()) @db.Integer
+  status    String    @default("naoEnviado") @db.VarChar(25)
+  createdAt DateTime  @default(now()) @db.Timestamptz()
+  updatedAt DateTime? @db.Timestamptz()
+
+  campanha   Campanha @relation(fields: [campanhaId], references: [id])
+  campanhaId Int      @db.Integer
+
+  cliente   Cliente @relation(fields: [clienteId], references: [id])
+  clienteId Int     @db.Integer
+
+  @@unique([campanhaId, clienteId])
+  @@index([campanhaId, status])
+  @@index([clienteId])
+  @@map("clientesCampanhas")
 }
 
 model cache {

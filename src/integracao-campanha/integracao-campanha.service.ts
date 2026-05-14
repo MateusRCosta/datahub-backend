@@ -16,10 +16,16 @@ import {
   integracaoCampanhaFilterConfig,
   integracaoCampanhaOrderByFields,
 } from './integracao-campanha.filter-config';
+import { PROVEDOR_INTEGRACAO_CAMPANHA } from './types/provedor-integracao-campanha.type';
+import { AtivaExecucao } from './types/execucao.type';
+import { UpchatService } from './integracao/upchat.service';
 
 @Injectable()
 export class IntegracaoCampanhaService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly upchatService: UpchatService,
+  ) {}
 
   async findAll(query: IntegracaoCampanhaFindAllQueryDto) {
     const page = query.page ?? 1;
@@ -104,7 +110,6 @@ export class IntegracaoCampanhaService {
       await this.prismaService.integracaoCampanha.create({
         data: {
           nome: dto.nome,
-          status: dto.status ?? false,
           provedor: dto.provedor,
           config: dto.config as unknown as Prisma.InputJsonValue,
         },
@@ -117,7 +122,6 @@ export class IntegracaoCampanhaService {
   async update(id: number, dto: IntegracaoCampanhaUpdateDto) {
     if (
       dto.nome === undefined &&
-      dto.status === undefined &&
       dto.provedor === undefined &&
       dto.config === undefined
     ) {
@@ -125,26 +129,43 @@ export class IntegracaoCampanhaService {
         'Informe ao menos um campo para atualizar: status, provedor ou config',
       );
     }
+    await this.prismaService.$transaction(async (tx) => {
+      const integracaoAntiga = await tx.integracaoCampanha.findFirst({
+        where: {
+          id: id,
+          deletedAt: null,
+        },
+      });
+      if (!integracaoAntiga) {
+        throw new NotFoundException('Integracao nao localizada');
+      }
 
-    const result = await this.prismaService.integracaoCampanha.updateMany({
-      where: { id, deletedAt: null },
-      data: {
-        nome: dto.nome,
-        status: dto.status,
-        provedor: dto.provedor,
-        config:
-          dto.config !== undefined
-            ? (dto.config as unknown as Prisma.InputJsonValue)
-            : undefined,
-        updatedAt: new Date(),
-      },
+      if (
+        dto.provedor !== undefined &&
+        (integracaoAntiga.provedor as PROVEDOR_INTEGRACAO_CAMPANHA) !==
+          dto.provedor
+      ) {
+        throw new BadRequestException(
+          'Integracao atual nao pode mudar de provedor',
+        );
+      }
+
+      const resultado = await tx.integracaoCampanha.updateMany({
+        where: { id, deletedAt: null },
+        data: {
+          nome: dto.nome,
+          provedor: dto.provedor,
+          config:
+            dto.config !== undefined
+              ? (dto.config as unknown as Prisma.InputJsonValue)
+              : undefined,
+          updatedAt: new Date(),
+        },
+      });
+      if (resultado.count === 0) {
+        throw new NotFoundException('Integracao campanha nao encontrada');
+      }
     });
-
-    if (result.count === 0) {
-      throw new NotFoundException('Integracao campanha nao encontrada');
-    }
-
-    return { id };
   }
 
   async delete(id: number) {
@@ -176,5 +197,29 @@ export class IntegracaoCampanhaService {
     }
 
     return { id };
+  }
+
+  async retornaProvedorPorId(
+    id: number,
+  ): Promise<PROVEDOR_INTEGRACAO_CAMPANHA> {
+    const integracaoCampanha =
+      await this.prismaService.integracaoCampanha.findFirst({
+        where: { id, deletedAt: null },
+        select: { id: true, provedor: true },
+      });
+
+    if (!integracaoCampanha) {
+      throw new NotFoundException('Integracao campanha nao encontrada');
+    }
+
+    return integracaoCampanha.provedor as PROVEDOR_INTEGRACAO_CAMPANHA;
+  }
+
+  async integracaoCampanhaExecucao(dto: AtivaExecucao): Promise<void> {
+    switch (dto.provedor) {
+      case PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT:
+        await this.upchatService.enviaMensagem(dto);
+        return;
+    }
   }
 }

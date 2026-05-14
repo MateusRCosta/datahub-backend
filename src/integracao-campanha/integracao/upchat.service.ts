@@ -10,9 +10,11 @@ import { HttpService } from '@nestjs/axios';
 import { AxiosError } from 'axios';
 import {
   BadRequestException,
+  Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
 
+@Injectable()
 export class UpchatService {
   constructor(
     private readonly prismaService: PrismaService,
@@ -65,7 +67,7 @@ export class UpchatService {
         return 0;
       });
 
-      return null;
+      return;
     } catch (error: unknown) {
       if (error instanceof AxiosError) {
         throw new BadRequestException(
@@ -82,7 +84,7 @@ export class UpchatService {
     templateId: number,
     nomeCampanha: string,
   ) {
-    return clientesRaw.forEach((cliente) => {
+    return clientesRaw.map((cliente) => {
       const varsTemplate =
         cliente.parametros.length > 0 ? cliente.parametros : [];
 

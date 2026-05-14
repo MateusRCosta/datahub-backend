@@ -1,38 +1,20 @@
-import { PROVEDOR } from 'src/integracao-campanha/types/execucao.type';
-
-export enum TIPO_BOTOES {
-  FLOW = 'flow',
-  QUICK_REPLY = 'quickReply',
-  PHONE_NUMBER = 'phoneNumber',
-  URL = 'url',
-}
+import { IntegracaoCampanha, Template } from '@prisma/client';
+import { UpchatConfigTemplate } from './template-upchat.types';
 
 export type Config = UpchatConfigTemplate;
 
-export type UpchatConfigTemplate = {
-  provedor: PROVEDOR.UPCHAT;
-  id: number;
-  nome: string;
-  tituloTemplate: string;
-  mensagemTemplate: string;
-  rodapeTemplate: string;
-  botoes: Botoes[];
+export type TemplateFindAll = Pick<Template, 'id' | 'nome'> & {
+  integracaoCampanha: IntegracaoCampanhaFindAllTemplate;
 };
 
-export type Botoes = BotaoFlow | BotaoQuickReply | BotaoUrl | BotaoPhoneNumber;
-interface BotaoBase {
-  textoBotao: string;
-}
-export interface BotaoFlow extends BotaoBase {
-  flowId: string;
-}
+export type TemplateFindOne = Pick<
+  Template,
+  'id' | 'nome' | 'config' | 'createdAt' | 'updatedAt'
+> & {
+  integracaoCampanha: IntegracaoCampanhaFindAllTemplate;
+};
 
-export type BotaoQuickReply = BotaoBase;
-
-export interface BotaoUrl extends BotaoBase {
-  url: string;
-}
-
-export interface BotaoPhoneNumber extends BotaoBase {
-  numeroTelefone: string;
-}
+type IntegracaoCampanhaFindAllTemplate = Pick<
+  IntegracaoCampanha,
+  'id' | 'nome' | 'provedor'
+>;

@@ -12,7 +12,7 @@ import {
 import {
   IntegracaoCampanhaComProvedor,
   IntegracaoCampanhaConfigType,
-  ProvedorIntegracaoCampanha,
+  PROVEDOR_INTEGRACAO_CAMPANHA,
 } from '../types/provedor-integracao-campanha.type';
 
 export class UpchatConfigDto {
@@ -41,7 +41,7 @@ export class EmailConfigDto {
 export class DisparoProConfigDto {
   @IsString()
   @MaxLength(128)
-  readonly api_key!: string;
+  readonly apiKey!: string;
 }
 
 export function getIntegracaoCampanhaConfigType(
@@ -50,13 +50,13 @@ export function getIntegracaoCampanhaConfigType(
   const dto = typeOptions?.object as IntegracaoCampanhaComProvedor | undefined;
 
   switch (dto?.provedor) {
-    case ProvedorIntegracaoCampanha.UPCHAT:
+    case PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT:
       return UpchatConfigDto;
 
-    case ProvedorIntegracaoCampanha.EMAIL:
+    case PROVEDOR_INTEGRACAO_CAMPANHA.EMAIL:
       return EmailConfigDto;
 
-    case ProvedorIntegracaoCampanha.DISPARO_PRO:
+    case PROVEDOR_INTEGRACAO_CAMPANHA.DISPARO_PRO:
       return DisparoProConfigDto;
 
     default:

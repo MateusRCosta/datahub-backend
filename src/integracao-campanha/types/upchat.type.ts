@@ -1,4 +1,4 @@
-import { PROVEDOR } from './execucao.type';
+import { PROVEDOR_INTEGRACAO_CAMPANHA } from './provedor-integracao-campanha.type';
 
 export enum STATUS_ENVIO {
   AGUARDANDO_ENVIO = 1,
@@ -22,7 +22,7 @@ export type UpchatCliente = {
 };
 
 export type UpchatExecuta = {
-  provedor: PROVEDOR.UPCHAT;
+  provedor: PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT;
   config: UpchatConfig;
   clientes: UpchatCliente[];
   templateId: number;

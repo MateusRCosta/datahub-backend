@@ -10,6 +10,7 @@ import { IntegracaoModule } from './integracao/integracao.module';
 import { IntegracaoCampanhaModule } from './integracao-campanha/integracao-campanha.module';
 import { ViewModule } from './view/view.module';
 import { TemplateModule } from './template/template.module';
+import { CampanhaModule } from './campanha/campanha.module';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { TemplateModule } from './template/template.module';
     IntegracaoCampanhaModule,
     ViewModule,
     TemplateModule,
+    CampanhaModule,
   ],
 })
 export class AppModule {}

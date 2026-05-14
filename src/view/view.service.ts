@@ -10,24 +10,18 @@ import {
   buildPrismaWhere,
 } from 'src/common/utils/prisma-filter-parser';
 import { PrismaService } from 'src/config/prisma.service';
-import { QueryView } from './types/view.types';
+import {
+  QueryView,
+  ViewDetails,
+  ViewListItem,
+  ViewRowWithClienteId,
+} from './types/view.types';
 import { ViewExecuteQueryDto } from './dto/view-execute-query.dto';
 import { ViewFindAllDto } from './dto/view-find-all-query.dto';
 import { ViewCreateDto } from './dto/view-create.dto';
 import { ViewUpdateDto } from './dto/view-update.dto';
 import { ViewQueryBuilderService } from './view-query-builder.service';
 import { viewFilterConfig, viewOrderByFields } from './view.filter-config';
-
-type ViewListItem = {
-  id: number;
-  nome: string;
-  createdAt: Date;
-  updatedAt: Date | null;
-};
-
-type ViewDetails = ViewListItem & {
-  config: Prisma.JsonValue;
-};
 
 @Injectable()
 export class ViewService {
@@ -112,18 +106,52 @@ export class ViewService {
     id: number,
     query: ViewExecuteQueryDto,
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
+    return this.executePaginated(id, query, false);
+  }
+
+  async executeComClienteId(
+    id: number,
+    query: ViewExecuteQueryDto,
+  ): Promise<PaginatedResponse<ViewRowWithClienteId>> {
+    return this.executePaginated(id, query, true);
+  }
+
+  async executePorClienteIds(
+    id: number,
+    clienteIds: number[],
+  ): Promise<ViewRowWithClienteId[]> {
+    if (clienteIds.length === 0) {
+      return [];
+    }
+
+    const viewQuery = await this.findConfigById(id);
+    const builtQuery = await this.buildQuery(viewQuery, true);
+    const clienteIdsParam = `$${builtQuery.params.length + 1}`;
+
+    return this.prismaService.$queryRawUnsafe<ViewRowWithClienteId[]>(
+      `${builtQuery.sql} AND c0."id" = ANY(${clienteIdsParam}::int[])`,
+      ...builtQuery.params,
+      clienteIds,
+    );
+  }
+
+  private async executePaginated<T extends Record<string, unknown>>(
+    id: number,
+    query: ViewExecuteQueryDto,
+    includeClienteId: boolean,
+  ): Promise<PaginatedResponse<T>> {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
     const viewQuery = await this.findConfigById(id);
-    const builtQuery = await this.viewQueryBuilderService.build(viewQuery);
+    const builtQuery = await this.buildQuery(viewQuery, includeClienteId);
     const limitParam = `$${builtQuery.params.length + 1}`;
     const offsetParam = `$${builtQuery.params.length + 2}`;
     const dataSql = `${builtQuery.sql} LIMIT ${limitParam} OFFSET ${offsetParam}`;
     const totalSql = `SELECT COUNT(*)::int AS "total" FROM (${builtQuery.sql}) AS "view_result"`;
 
     const [data, totalResult] = await Promise.all([
-      this.prismaService.$queryRawUnsafe<Record<string, unknown>[]>(
+      this.prismaService.$queryRawUnsafe<T[]>(
         dataSql,
         ...builtQuery.params,
         limit,
@@ -146,6 +174,25 @@ export class ViewService {
         hasNextPage: page * limit < total,
         hasPreviousPage: page > 1,
       },
+    };
+  }
+
+  private async buildQuery(
+    query: QueryView,
+    includeClienteId: boolean,
+  ): Promise<{ readonly sql: string; readonly params: readonly unknown[] }> {
+    const builtQuery = await this.viewQueryBuilderService.build(query);
+
+    if (!includeClienteId) {
+      return builtQuery;
+    }
+
+    return {
+      sql: builtQuery.sql.replace(
+        /^SELECT\s/i,
+        'SELECT c0."id" AS "_clienteId", ',
+      ),
+      params: builtQuery.params,
     };
   }
 

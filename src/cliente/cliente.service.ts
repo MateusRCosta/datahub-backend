@@ -120,6 +120,23 @@ export class ClientesService {
     };
   }
 
+  async buscaIdsPorBase(
+    baseDeDadosId: number,
+    skip: number,
+    take: number,
+  ): Promise<Array<{ id: number }>> {
+    return this.prismaService.cliente.findMany({
+      where: {
+        baseDeDadosId,
+        deletedAt: null,
+      },
+      select: { id: true },
+      orderBy: { id: 'asc' },
+      skip,
+      take,
+    });
+  }
+
   async buscaPorId(id: number) {
     if (Number.isNaN(id)) {
       throw new BadRequestException('Id inválido');

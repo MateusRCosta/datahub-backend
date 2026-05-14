@@ -20,7 +20,7 @@ import { IntegracaoCampanhaFindAllQueryDto } from './dto/integracao-campanha-fin
 import { IntegracaoCampanhaUpdateDto } from './dto/integracao-campanha-update.dto';
 import { IntegracaoCampanhaService } from './integracao-campanha.service';
 
-@Controller('integracao-campanha')
+@Controller('integracoes-campanhas')
 @Roles(Permissao.EDITAR_INTEGRACOES)
 export class IntegracaoCampanhaController {
   constructor(

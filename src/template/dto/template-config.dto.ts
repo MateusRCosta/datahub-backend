@@ -1,54 +1,22 @@
-import { Type, TypeHelpOptions } from 'class-transformer';
-import { IsNumber, IsString, Max, MaxLength, ValidateNested } from 'class-validator';
+import type { TypeHelpOptions } from 'class-transformer';
+import { UpchatConfigDto } from './template-upchat-config.dto';
+import type { TemplateComProvedor } from '../types/template-upchat.types';
+import { PROVEDOR_INTEGRACAO_CAMPANHA } from 'src/integracao-campanha/types/provedor-integracao-campanha.type';
 
-export class UpchatConfigDto {
-  @IsNumber()
-  @Max(65536)
-  readonly id!: number;
+export type TemplateConfigDto = UpchatConfigDto;
 
-  @IsString()
-  @MaxLength(512)
-  readonly nome!: string;
+export type TemplateConfigDtoType = typeof UpchatConfigDto | typeof Object;
 
-  @IsString()
-  @MaxLength(60)
-  readonly tituloTemplate!: string;
+export function getTemplateConfigDtoType(
+  typeOptions?: TypeHelpOptions,
+): TemplateConfigDtoType {
+  const dto = typeOptions?.object as TemplateComProvedor | undefined;
 
-  @IsString()
-  @MaxLength(1024)
-  readonly mensagemTemplate!: string;
+  switch (dto?.provedor) {
+    case PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT:
+      return UpchatConfigDto;
 
-  @IsString()
-  @MaxLength(60)
-  readonly rodapeTempalte!: string;
-
-  @ValidateNested()
-  readonly botoes!: BotoesDto[];
+    default:
+      return Object;
+  }
 }
-
-class BotaoBaseDto {
-  @IsString()
-  @MaxLength(25)
-  readonly textoBotao!: string;
-}
-export class BotaoFlowDto extends BotaoBaseDto {
-  @IsString()
-  @MaxLength(36)
-  readonly flowId!: string;
-}
-
-export class BotaoQuickReplyDto extends BotaoBaseDto {}
-
-export class BotaoUrlDto extends BotaoBaseDto {
-  @IsString()
-  @MaxLength(2000)
-  readonly url!: string;
-}
-
-export class BotaoPhoneNumberDto extends BotaoBaseDto {
-  @IsString()
-  @MaxLength(20)
-  readonly numeroTelefone!: string;
-}
-
-

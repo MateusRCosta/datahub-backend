@@ -1,28 +1,24 @@
 import { Type } from 'class-transformer';
 import {
-  IsBoolean,
   IsEnum,
   IsObject,
-  IsOptional,
   IsString,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
 import { getIntegracaoCampanhaConfigType } from './integracao-campanha-config.dto';
-import type { IntegracaoCampanhaConfigDto } from './integracao-campanha-config.dto';
-import { ProvedorIntegracaoCampanha } from '../types/provedor-integracao-campanha.type';
+import {
+  PROVEDOR_INTEGRACAO_CAMPANHA,
+  type IntegracaoCampanhaConfigDto,
+} from '../types/provedor-integracao-campanha.type';
 
 export class IntegracaoCampanhaCreateDto {
   @MaxLength(100)
   @IsString()
   readonly nome!: string;
 
-  @IsOptional()
-  @IsBoolean()
-  readonly status?: boolean;
-
-  @IsEnum(ProvedorIntegracaoCampanha)
-  readonly provedor!: ProvedorIntegracaoCampanha;
+  @IsEnum(PROVEDOR_INTEGRACAO_CAMPANHA)
+  readonly provedor!: PROVEDOR_INTEGRACAO_CAMPANHA;
 
   @IsObject()
   @ValidateNested()

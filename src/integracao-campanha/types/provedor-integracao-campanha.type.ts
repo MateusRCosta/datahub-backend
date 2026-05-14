@@ -4,10 +4,10 @@ import {
   UpchatConfigDto,
 } from '../dto/integracao-campanha-config.dto';
 
-export enum ProvedorIntegracaoCampanha {
-  UPCHAT = 'UPCHAT',
-  EMAIL = 'EMAIL',
-  DISPARO_PRO = 'DISPARO_PRO',
+export enum PROVEDOR_INTEGRACAO_CAMPANHA {
+  UPCHAT = 'upchat',
+  EMAIL = 'email',
+  DISPARO_PRO = 'disparoPro',
 }
 
 export type IntegracaoCampanhaConfigDto =
@@ -22,5 +22,5 @@ export type IntegracaoCampanhaConfigType =
   | typeof Object;
 
 export interface IntegracaoCampanhaComProvedor {
-  provedor?: ProvedorIntegracaoCampanha;
+  provedor?: PROVEDOR_INTEGRACAO_CAMPANHA;
 }
