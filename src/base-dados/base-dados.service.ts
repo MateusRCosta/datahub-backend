@@ -77,6 +77,11 @@ export class BasesDadosService {
               nome: true,
             },
           },
+          _count: {
+            select: {
+              clientes: true,
+            },
+          },
         },
       }),
       this.prismaService.baseDeDados.count({ where }),
@@ -113,6 +118,12 @@ export class BasesDadosService {
             nome: true,
           },
         },
+        estrutura: true,
+        _count: {
+          select: {
+            clientes: true,
+          },
+        },
         createdAt: true,
         updatedAt: true,
       },
@@ -128,7 +139,6 @@ export class BasesDadosService {
   async garanteBaseDaIntegracao(
     prisma: Prisma.TransactionClient,
     integracaoId: number,
-    integracaoUsuarioId: number,
     integracaoNome: string,
     integracaoResponseScrap: unknown,
   ) {
@@ -152,7 +162,6 @@ export class BasesDadosService {
         data: {
           nome: integracaoNome,
           estrutura: estruturaScrap as unknown as Prisma.InputJsonValue,
-          usuarioId: integracaoUsuarioId,
           integracaoId: integracaoId,
         },
         select: { id: true },
@@ -245,6 +254,7 @@ export class BasesDadosService {
       });
 
       await this.clientesService.criaClientesDaBase(
+        prisma,
         base.id,
         dto.estrutura,
         parsedCsv.list,

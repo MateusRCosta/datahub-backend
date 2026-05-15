@@ -1,4 +1,3 @@
-import { PrismaService } from 'src/config/prisma.service';
 import {
   UpchatCliente,
   UpchatExecuta,
@@ -16,12 +15,15 @@ import {
 
 @Injectable()
 export class UpchatService {
-  constructor(
-    private readonly prismaService: PrismaService,
-    private readonly httpService: HttpService,
-  ) {}
+  constructor(private readonly httpService: HttpService) {}
 
   async enviaMensagem(dto: UpchatExecuta) {
+    console.log('[UpchatService] Iniciando envio de mensagem', {
+      campanha: dto.nomeCampanha,
+      templateId: dto.templateId,
+      totalClientes: dto.clientes.length,
+    });
+
     const clientesRaw = dto.clientes;
     const mensagens = this.constroiBodyMensagem(
       clientesRaw,
@@ -36,6 +38,11 @@ export class UpchatService {
     };
 
     try {
+      console.log('[UpchatService] Enviando mensagens para Upchat', {
+        url: `${dto.config.url}/int/enqueueMessagesToSend`,
+        totalMensagens: mensagens.length,
+      });
+
       const resultado = await firstValueFrom(
         this.httpService.request<UpchatMessagesResponse>({
           method: 'POST',
@@ -43,32 +50,43 @@ export class UpchatService {
           data: body,
         }),
       );
+      const enqueueIds = resultado.data.success ?? [];
+      console.log('[UpchatService] Mensagens enfileiradas', {
+        totalEnfileiradas: enqueueIds.length,
+        enqueueIds,
+      });
 
-      const enqueueIds = resultado.data.sucess;
-      // eslint-disable-next-line @typescript-eslint/no-unused-vars
-      const status = enqueueIds.map(async (enqueueId) => {
-        const bodyStatus = {
-          queueId: dto.config.queueId,
-          apiKey: dto.config.apiKey,
-          enqueueId: enqueueId.enqueueId,
-        };
-        const responseStatus = await firstValueFrom(
-          this.httpService.request<UpchatStatusResponse>({
-            method: 'POST',
-            url: `${dto.config.url}/int/checkEnqueuedMessage`,
-            data: bodyStatus,
-            validateStatus: () => true,
-          }),
-        );
-        if (responseStatus.status === 200) {
-          return responseStatus.data.status;
-        }
+      const status = await Promise.all(
+        enqueueIds.map(async (enqueueId) => {
+          const bodyStatus = {
+            queueId: dto.config.queueId,
+            apiKey: dto.config.apiKey,
+            enqueueId: enqueueId.enqueuedId,
+          };
+          const responseStatus = await firstValueFrom(
+            this.httpService.request<UpchatStatusResponse>({
+              method: 'POST',
+              url: `${dto.config.url}/int/checkEnqueuedMessage`,
+              data: bodyStatus,
+              validateStatus: () => true,
+            }),
+          );
+          if (responseStatus.status === 200) {
+            return responseStatus.data.status;
+          }
 
-        return 0;
+          return 0;
+        }),
+      );
+
+      console.log('[UpchatService] Status das mensagens consultado', {
+        status,
       });
 
       return;
     } catch (error: unknown) {
+      console.log('[UpchatService] Erro ao enviar mensagem', error);
+
       if (error instanceof AxiosError) {
         throw new BadRequestException(
           `API retornou erro. Status: ${error.code}`,

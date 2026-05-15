@@ -98,6 +98,7 @@ CREATE TABLE "integracoesCampanhas" (
     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMPTZ,
     "deletedAt" TIMESTAMPTZ,
+    "usuarioId" INTEGER NOT NULL,
 
     CONSTRAINT "integracoesCampanhas_pkey" PRIMARY KEY ("id")
 );
@@ -125,6 +126,7 @@ CREATE TABLE "views" (
     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMPTZ,
     "deletedAt" TIMESTAMPTZ,
+    "usuarioId" INTEGER NOT NULL,
 
     CONSTRAINT "views_pkey" PRIMARY KEY ("id")
 );
@@ -137,6 +139,7 @@ CREATE TABLE "templates" (
     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMPTZ,
     "deletedAt" TIMESTAMPTZ,
+    "usuarioId" INTEGER NOT NULL,
     "integracaoCampanhaId" INTEGER NOT NULL,
 
     CONSTRAINT "templates_pkey" PRIMARY KEY ("id")
@@ -156,6 +159,7 @@ CREATE TABLE "campanhas" (
     "scheduledAt" TIMESTAMPTZ NOT NULL,
     "executedAt" TIMESTAMPTZ,
     "finishedAt" TIMESTAMPTZ,
+    "usuarioId" INTEGER NOT NULL,
     "viewId" INTEGER,
     "baseDeDadoId" INTEGER,
     "templateId" INTEGER NOT NULL,
@@ -225,10 +229,22 @@ ALTER TABLE "clientes" ADD CONSTRAINT "clientes_baseDeDadosId_fkey" FOREIGN KEY 
 ALTER TABLE "integracoes" ADD CONSTRAINT "integracoes_usuarioId_fkey" FOREIGN KEY ("usuarioId") REFERENCES "usuarios"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "integracoesCampanhas" ADD CONSTRAINT "integracoesCampanhas_usuarioId_fkey" FOREIGN KEY ("usuarioId") REFERENCES "usuarios"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "jobs" ADD CONSTRAINT "jobs_integracaoId_fkey" FOREIGN KEY ("integracaoId") REFERENCES "integracoes"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
+ALTER TABLE "views" ADD CONSTRAINT "views_usuarioId_fkey" FOREIGN KEY ("usuarioId") REFERENCES "usuarios"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "templates" ADD CONSTRAINT "templates_usuarioId_fkey" FOREIGN KEY ("usuarioId") REFERENCES "usuarios"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
 ALTER TABLE "templates" ADD CONSTRAINT "templates_integracaoCampanhaId_fkey" FOREIGN KEY ("integracaoCampanhaId") REFERENCES "integracoesCampanhas"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
+
+-- AddForeignKey
+ALTER TABLE "campanhas" ADD CONSTRAINT "campanhas_usuarioId_fkey" FOREIGN KEY ("usuarioId") REFERENCES "usuarios"("id") ON DELETE RESTRICT ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "campanhas" ADD CONSTRAINT "campanhas_viewId_fkey" FOREIGN KEY ("viewId") REFERENCES "views"("id") ON DELETE SET NULL ON UPDATE CASCADE;

@@ -43,25 +43,47 @@ export class CampanhaJobService {
   ) {}
 
   async executaCampanha(id: number): Promise<void> {
+    console.log('[CampanhaJobService] Iniciando execucao da campanha', { id });
+
     await this.populaClientesCampanha(id);
+    console.log('[CampanhaJobService] Clientes da campanha populados', { id });
+
     await this.clienteCampanhaService.marcaEmEnvioComoErro(id);
+    console.log('[CampanhaJobService] Clientes em envio marcados como erro', {
+      id,
+    });
 
     while (true) {
       const campanha = await this.buscaCampanhaExecucao(id);
+      console.log('[CampanhaJobService] Campanha carregada para execucao', {
+        id,
+        status: campanha.status,
+      });
 
       if (
         (campanha.status as STATUS_CAMPANHA) === STATUS_CAMPANHA.PAUSA ||
         (campanha.status as STATUS_CAMPANHA) === STATUS_CAMPANHA.CANCELADO ||
         (campanha.status as STATUS_CAMPANHA) === STATUS_CAMPANHA.ENVIADO
       ) {
+        console.log('[CampanhaJobService] Execucao interrompida pelo status', {
+          id,
+          status: campanha.status,
+        });
         return;
       }
 
       const pendentes =
         await this.clienteCampanhaService.buscaClientesPendentes(id);
+      console.log('[CampanhaJobService] Clientes pendentes encontrados', {
+        id,
+        totalPendentes: pendentes.length,
+      });
 
       if (pendentes.length === 0) {
         await this.finalizaSeNaoHouverPendentes(id);
+        console.log('[CampanhaJobService] Campanha sem pendentes processada', {
+          id,
+        });
         return;
       }
 
@@ -73,11 +95,21 @@ export class CampanhaJobService {
     campanha: CampanhaExecucao,
     pendentes: ClienteCampanhaPendente[],
   ): Promise<void> {
+    console.log('[CampanhaJobService] Iniciando envio do batch', {
+      campanhaId: campanha.id,
+      totalPendentes: pendentes.length,
+    });
+
     const vars = this.toCampanhaVars(campanha.vars);
     const sourceConfig = await this.carregaSourceConfig(
       campanha.viewId,
       campanha.baseDeDadoId,
     );
+    console.log('[CampanhaJobService] Origem da campanha carregada', {
+      campanhaId: campanha.id,
+      tipo: sourceConfig.tipo,
+    });
+
     const viewQuery =
       sourceConfig.tipo === 'view'
         ? await this.buscaQueryView(sourceConfig.viewId)
@@ -115,12 +147,21 @@ export class CampanhaJobService {
       clienteCampanhaIds.push(pendente.id);
     }
 
+    console.log('[CampanhaJobService] Mensagens montadas para envio', {
+      campanhaId: campanha.id,
+      totalMensagens: mensagens.length,
+      totalComErro: clienteCampanhaComErro.length,
+    });
+
     await this.clienteCampanhaService.atualizaStatusClientes(
       clienteCampanhaComErro,
       STATUS_CLIENTE_CAMPANHA.ERRO,
     );
 
     if (mensagens.length === 0) {
+      console.log('[CampanhaJobService] Batch sem mensagens validas', {
+        campanhaId: campanha.id,
+      });
       return;
     }
 
@@ -130,21 +171,45 @@ export class CampanhaJobService {
     );
 
     try {
-      await this.integracaoCampanhaService.integracaoCampanhaExecucao({
-        provedor: this.getProvedorUpchat(campanha),
-        config: this.getUpchatConfig(
-          campanha.template.integracaoCampanha.config,
-        ),
-        clientes: mensagens,
-        templateId: this.getTemplateProviderId(campanha.template.config),
-        nomeCampanha: campanha.nome,
+      console.log('[CampanhaJobService] Enviando batch para integracao', {
+        campanhaId: campanha.id,
+        provedor: campanha.template.integracaoCampanha.provedor,
+        totalMensagens: mensagens.length,
       });
+
+      switch (
+        campanha.template.integracaoCampanha
+          .provedor as PROVEDOR_INTEGRACAO_CAMPANHA
+      ) {
+        case PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT:
+          await this.integracaoCampanhaService.integracaoCampanhaExecucao({
+            provedor: this.getProvedorUpchat(campanha),
+            config: this.getUpchatConfig(
+              campanha.template.integracaoCampanha.config,
+            ),
+            clientes: mensagens,
+            templateId: campanha.template.id,
+            nomeCampanha: campanha.nome,
+          });
+          break;
+        default:
+          console.log('Integracao nao configurada ainda');
+      }
 
       await this.clienteCampanhaService.atualizaStatusClientes(
         clienteCampanhaIds,
         STATUS_CLIENTE_CAMPANHA.ENVIADO,
       );
+      console.log('[CampanhaJobService] Batch enviado com sucesso', {
+        campanhaId: campanha.id,
+        totalEnviados: clienteCampanhaIds.length,
+      });
     } catch (error: unknown) {
+      console.log('[CampanhaJobService] Erro ao enviar batch', {
+        campanhaId: campanha.id,
+        error,
+      });
+
       await this.clienteCampanhaService.atualizaStatusClientes(
         clienteCampanhaIds,
         STATUS_CLIENTE_CAMPANHA.ERRO,
@@ -154,6 +219,10 @@ export class CampanhaJobService {
   }
 
   private async populaClientesCampanha(campanhaId: number): Promise<void> {
+    console.log('[CampanhaJobService] Populando clientes da campanha', {
+      campanhaId,
+    });
+
     const campanha = await this.prismaService.campanha.findFirst({
       where: { id: campanhaId, deletedAt: null },
       select: {
@@ -168,11 +237,22 @@ export class CampanhaJobService {
     }
 
     if (campanha.baseDeDadoId !== null) {
+      console.log(
+        '[CampanhaJobService] Populando clientes pela base de dados',
+        {
+          campanhaId,
+          baseDeDadoId: campanha.baseDeDadoId,
+        },
+      );
       await this.populaClientesDaBase(campanha.id, campanha.baseDeDadoId);
       return;
     }
 
     if (campanha.viewId !== null) {
+      console.log('[CampanhaJobService] Populando clientes pela view', {
+        campanhaId,
+        viewId: campanha.viewId,
+      });
       await this.populaClientesDaView(campanha.id, campanha.viewId);
       return;
     }
@@ -194,6 +274,11 @@ export class CampanhaJobService {
       );
 
       if (clientes.length === 0) {
+        console.log('[CampanhaJobService] Fim da populacao pela base', {
+          campanhaId,
+          baseDeDadoId,
+          skip,
+        });
         return;
       }
 
@@ -201,6 +286,11 @@ export class CampanhaJobService {
         campanhaId,
         clientes.map((cliente) => cliente.id),
       );
+      console.log('[CampanhaJobService] Clientes da base adicionados', {
+        campanhaId,
+        baseDeDadoId,
+        totalClientes: clientes.length,
+      });
       skip += clientes.length;
     }
   }
@@ -218,14 +308,30 @@ export class CampanhaJobService {
       });
 
       if (rows.data.length === 0) {
+        console.log('[CampanhaJobService] Fim da populacao pela view', {
+          campanhaId,
+          viewId,
+          page,
+        });
         return;
       }
 
       await this.clienteCampanhaService.criaClientesCampanha(campanhaId, [
         ...new Set(rows.data.map((row) => row._clienteId)),
       ]);
+      console.log('[CampanhaJobService] Clientes da view adicionados', {
+        campanhaId,
+        viewId,
+        page,
+        totalRows: rows.data.length,
+      });
 
       if (!rows.meta.hasNextPage) {
+        console.log('[CampanhaJobService] Fim da paginacao da view', {
+          campanhaId,
+          viewId,
+          page,
+        });
         return;
       }
 
@@ -238,6 +344,10 @@ export class CampanhaJobService {
       await this.clienteCampanhaService.contaPendentesOuEmEnvio(id);
 
     if (pendentes > 0) {
+      console.log('[CampanhaJobService] Campanha ainda possui pendentes', {
+        id,
+        pendentes,
+      });
       return;
     }
 
@@ -253,6 +363,7 @@ export class CampanhaJobService {
         updatedAt: new Date(),
       },
     });
+    console.log('[CampanhaJobService] Campanha finalizada', { id });
   }
 
   private async buscaCampanhaExecucao(id: number): Promise<CampanhaExecucao> {
@@ -268,6 +379,7 @@ export class CampanhaJobService {
         baseDeDadoId: true,
         template: {
           select: {
+            id: true,
             config: true,
             integracaoCampanha: {
               select: {
@@ -386,17 +498,6 @@ export class CampanhaJobService {
     return this.toStringOrEmpty(accessor(this.getReferencia(value)));
   }
 
-  private getTemplateProviderId(config: Prisma.JsonValue): number {
-    const record = this.toRecord(config);
-    const id = record['id'];
-
-    if (typeof id !== 'number') {
-      throw new BadRequestException('Template nao possui id do provedor');
-    }
-
-    return id;
-  }
-
   private getUpchatConfig(config: Prisma.JsonValue): UpchatConfig {
     const record = this.toRecord(config);
     const url = record['url'];
@@ -468,7 +569,7 @@ export class CampanhaJobService {
       return null;
     }
 
-    return `b${select.baseDadosId}_${campo.rotulo}`;
+    return `${campo.rotulo}`;
   }
 
   private getReferencia(value: string): string {

@@ -1,8 +1,10 @@
 import {
   BadRequestException,
+  Inject,
   Injectable,
   InternalServerErrorException,
   NotFoundException,
+  forwardRef,
 } from '@nestjs/common';
 import { Integracao, Prisma } from '@prisma/client';
 import { PrismaService } from '../config/prisma.service';
@@ -27,6 +29,7 @@ export class IntegracaoService {
   constructor(
     private prismaService: PrismaService,
     private integracaoExecucaoService: IntegracaoExecucaoService,
+    @Inject(forwardRef(() => IntegracaoSchedularService))
     private integracaoSchedularService: IntegracaoSchedularService,
   ) {}
 
@@ -39,6 +42,7 @@ export class IntegracaoService {
       {
         id: query.id,
         nome: query.nome,
+        usuarioId: query.usuarioId,
       },
       integracoesFilterConfig,
       { deletedAt: null },
@@ -60,7 +64,12 @@ export class IntegracaoService {
         select: {
           id: true,
           nome: true,
-          usuarioId: true,
+          usuario: {
+            select: {
+              id: true,
+              nome: true,
+            },
+          },
           status: true,
           createdAt: true,
           updatedAt: true,
@@ -88,8 +97,33 @@ export class IntegracaoService {
       select: {
         id: true,
         nome: true,
-        usuarioId: true,
+        usuario: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
         status: true,
+        limitDeRequisicaoPorMin: true,
+        horaExecucao: true,
+        urlAuth: true,
+        metodoAuth: true,
+        headersAuth: true,
+        variaveisAuth: true,
+        bodyAuth: true,
+        responseAuth: true,
+        urlRefresh: true,
+        metodoRefresh: true,
+        headersRefresh: true,
+        variaveisRefresh: true,
+        bodyRefresh: true,
+        responseRefresh: true,
+        urlScrap: true,
+        metodoScrap: true,
+        headersScrap: true,
+        variaveisScrap: true,
+        bodyScrap: true,
+        responseScrap: true,
         createdAt: true,
         updatedAt: true,
       },

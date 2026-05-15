@@ -43,11 +43,13 @@ export class ClientesService {
   }
 
   async criaClientesDaBase(
+    prisma: Prisma.TransactionClient | PrismaClient,
     baseDeDadosId: number,
     estrutura: EstruturaBaseDadosDto[],
     linhas: Array<Record<string, unknown>>,
   ) {
     return this.clientesCriacaoService.criaClientesDaBase(
+      prisma,
       baseDeDadosId,
       estrutura,
       linhas,

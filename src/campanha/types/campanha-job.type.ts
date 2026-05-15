@@ -5,4 +5,3 @@ export type CampanhaReservada = {
 export type ViewRowCampanha = Record<string, unknown> & {
   readonly _clienteId: number;
 };
-

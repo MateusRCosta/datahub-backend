@@ -30,8 +30,8 @@ export type UpchatExecuta = {
 };
 
 export type UpchatMessagesResponse = {
-  sucess: {
-    enqueueId: number;
+  success: {
+    enqueuedId: number;
   }[];
   fails: [];
   successCount: number;

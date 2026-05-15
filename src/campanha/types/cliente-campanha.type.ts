@@ -25,4 +25,3 @@ export type ClienteCampanhaPendente = Pick<
     readonly dados: Prisma.JsonValue;
   };
 };
-

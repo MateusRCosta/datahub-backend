@@ -1,14 +1,11 @@
 import { Injectable } from '@nestjs/common';
 import { Prisma, PrismaClient } from '@prisma/client';
 import { createHash } from 'crypto';
-import { PrismaService } from 'src/config/prisma.service';
 import { normalizaDadosCliente } from './utils/dados-normalizer';
 import { EstruturaBaseDadosDto } from 'src/base-dados/dto/bases-dados-estrutura.dto';
 
 @Injectable()
 export class ClientesCriacaoService {
-  constructor(private readonly prismaService: PrismaService) {}
-
   async criaOuAtualizaClientesDaBase(
     prisma: Prisma.TransactionClient | PrismaClient,
     baseDeDadosId: number,
@@ -164,6 +161,7 @@ export class ClientesCriacaoService {
   }
 
   async criaClientesDaBase(
+    prisma: Prisma.TransactionClient | PrismaClient,
     baseDeDadosId: number,
     estrutura: EstruturaBaseDadosDto[],
     linhas: Array<Record<string, unknown>>,
@@ -179,10 +177,9 @@ export class ClientesCriacaoService {
         hash,
       };
     });
-
     if (clientes.length === 0) return false;
 
-    const resultado = await this.prismaService.cliente.createMany({
+    const resultado = await prisma.cliente.createMany({
       data: clientes,
       skipDuplicates: true,
     });

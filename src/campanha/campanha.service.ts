@@ -52,6 +52,7 @@ export class CampanhaService {
         templateId: query.templateId,
         viewId: query.viewId,
         baseDeDadoId: query.baseDeDadoId,
+        usuarioId: query.usuarioId,
       },
       campanhaFilterConfig,
       { deletedAt: null },
@@ -84,6 +85,12 @@ export class CampanhaService {
           templateId: true,
           viewId: true,
           baseDeDadoId: true,
+          usuario: {
+            select: {
+              id: true,
+              nome: true,
+            },
+          },
           createdAt: true,
           updatedAt: true,
         },
@@ -109,6 +116,12 @@ export class CampanhaService {
         templateId: true,
         viewId: true,
         baseDeDadoId: true,
+        usuario: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
         createdAt: true,
         updatedAt: true,
         template: {
@@ -134,7 +147,10 @@ export class CampanhaService {
     return campanha;
   }
 
-  async create(dto: CampanhaCreateDto): Promise<{ id: number }> {
+  async create(
+    dto: CampanhaCreateDto,
+    usuarioId: number,
+  ): Promise<{ id: number }> {
     this.validaScheduledAt(dto.scheduledAt);
     this.validaCampoReferencia(dto.contatoCampo, 'contatoCampo');
     this.validaVars(dto.vars);
@@ -156,6 +172,7 @@ export class CampanhaService {
         baseDeDadoId: dto.baseDeDadoId,
         contatoCampo: dto.contatoCampo,
         vars: dto.vars as unknown as Prisma.InputJsonValue,
+        usuarioId,
       },
       select: { id: true },
     });

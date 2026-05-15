@@ -6,6 +6,7 @@ export const campanhaFilterConfig: Record<string, PrismaFilterFieldConfig> = {
   templateId: { type: 'number' },
   viewId: { type: 'number' },
   baseDeDadoId: { type: 'number' },
+  usuarioId: { type: 'number' },
 };
 
 export const campanhaOrderByFields = [
@@ -15,6 +16,7 @@ export const campanhaOrderByFields = [
   'scheduledAt',
   'executedAt',
   'finishedAt',
+  'usuarioId',
   'createdAt',
   'updatedAt',
 ];

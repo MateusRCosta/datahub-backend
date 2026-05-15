@@ -7,19 +7,24 @@ datasource db {
 }
 
 model Usuario {
-  id          Int           @id @default(autoincrement()) @db.Integer
-  nome        String        @db.VarChar(120)
-  email       String        @unique @db.VarChar(120)
-  senha       String        @db.VarChar(255)
-  permissoes  Json?         @db.JsonB
-  admin       Boolean       @default(false) @db.Boolean
-  ativo       Boolean       @default(true) @db.Boolean
-  createdAt   DateTime      @default(now()) @db.Timestamptz()
-  updatedAt   DateTime?     @db.Timestamptz()
-  deletedAt   DateTime?     @db.Timestamptz()
-  baseDeDados BaseDeDados[]
-  sessao      Sessao[]
-  integracao  Integracao[]
+  id                  Int                  @id @default(autoincrement()) @db.Integer
+  nome                String               @db.VarChar(120)
+  email               String               @unique @db.VarChar(120)
+  senha               String               @db.VarChar(255)
+  permissoes          Json?                @db.JsonB
+  admin               Boolean              @default(false) @db.Boolean
+  ativo               Boolean              @default(true) @db.Boolean
+  createdAt           DateTime             @default(now()) @db.Timestamptz()
+  updatedAt           DateTime?            @db.Timestamptz()
+  deletedAt           DateTime?            @db.Timestamptz()
+  
+  baseDeDados         BaseDeDados[]
+  sessao              Sessao[]
+  integracao          Integracao[]
+  campanhas           Campanha[]
+  templates           Template[]
+  views               View[]
+  integracaoCampanhas IntegracaoCampanha[]
 
   @@map("usuarios")
 }
@@ -127,6 +132,9 @@ model IntegracaoCampanha {
   updatedAt DateTime? @db.Timestamptz()
   deletedAt DateTime? @db.Timestamptz()
 
+  usuarioId Int     @db.Integer
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
   template Template[]
 
   @@map("integracoesCampanhas")
@@ -156,6 +164,9 @@ model View {
   updatedAt DateTime? @db.Timestamptz()
   deletedAt DateTime? @db.Timestamptz()
 
+  usuarioId Int     @db.Integer
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
+
   campanhas Campanha[]
 
   @@map("views")
@@ -168,6 +179,9 @@ model Template {
   createdAt DateTime  @default(now()) @db.Timestamptz()
   updatedAt DateTime? @db.Timestamptz()
   deletedAt DateTime? @db.Timestamptz()
+
+  usuarioId Int     @db.Integer
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
 
   integracaoCampanhaId Int                @db.Integer
   integracaoCampanha   IntegracaoCampanha @relation(fields: [integracaoCampanhaId], references: [id])
@@ -192,6 +206,9 @@ model Campanha {
   scheduledAt DateTime  @db.Timestamptz()
   executedAt  DateTime? @db.Timestamptz()
   finishedAt  DateTime? @db.Timestamptz()
+
+  usuarioId Int     @db.Integer
+  usuario   Usuario @relation(fields: [usuarioId], references: [id])
 
   view   View? @relation(fields: [viewId], references: [id])
   viewId Int?  @db.Integer

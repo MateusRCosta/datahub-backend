@@ -62,6 +62,12 @@ export class ViewService {
         select: {
           id: true,
           nome: true,
+          usuario: {
+            select: {
+              id: true,
+              nome: true,
+            },
+          },
           createdAt: true,
           updatedAt: true,
         },
@@ -90,6 +96,12 @@ export class ViewService {
         nome: true,
         descricao: true,
         config: true,
+        usuario: {
+          select: {
+            id: true,
+            nome: true,
+          },
+        },
         createdAt: true,
         updatedAt: true,
       },
@@ -196,12 +208,13 @@ export class ViewService {
     };
   }
 
-  async create(dto: ViewCreateDto): Promise<{ id: number }> {
+  async create(dto: ViewCreateDto, usuarioId: number): Promise<{ id: number }> {
     const view = await this.prismaService.view.create({
       data: {
         nome: dto.nome,
         descricao: dto.descricao ?? undefined,
         config: dto.query as unknown as Prisma.InputJsonValue,
+        usuarioId,
       },
       select: {
         id: true,

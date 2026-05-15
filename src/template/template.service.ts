@@ -28,7 +28,10 @@ export class TemplateService {
     private readonly integracaoCampanhaService: IntegracaoCampanhaService,
   ) {}
 
-  async create(dto: CreateTemplateDto): Promise<{ id: number }> {
+  async create(
+    dto: CreateTemplateDto,
+    usuarioId: number,
+  ): Promise<{ id: number }> {
     await this.validaIntegracaoCampanhaEProvedor(
       dto.integracaoCampanhaId,
       dto.provedor,
@@ -39,6 +42,7 @@ export class TemplateService {
         nome: dto.nome,
         integracaoCampanhaId: dto.integracaoCampanhaId,
         config: dto.config as unknown as Prisma.InputJsonValue,
+        usuarioId,
       },
       select: {
         id: true,
@@ -88,6 +92,12 @@ export class TemplateService {
               id: true,
             },
           },
+          usuario: {
+            select: {
+              id: true,
+              nome: true,
+            },
+          },
           createdAt: true,
           updatedAt: true,
         },
@@ -119,6 +129,12 @@ export class TemplateService {
           select: {
             id: true,
             provedor: true,
+            nome: true,
+          },
+        },
+        usuario: {
+          select: {
+            id: true,
             nome: true,
           },
         },

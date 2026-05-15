@@ -65,6 +65,12 @@ export class IntegracaoCampanhaService {
           nome: true,
           provedor: true,
           status: true,
+          usuario: {
+            select: {
+              id: true,
+              nome: true,
+            },
+          },
         },
       }),
       this.prismaService.integracaoCampanha.count({ where }),
@@ -93,6 +99,12 @@ export class IntegracaoCampanhaService {
           status: true,
           provedor: true,
           config: true,
+          usuario: {
+            select: {
+              id: true,
+              nome: true,
+            },
+          },
           createdAt: true,
           updatedAt: true,
         },
@@ -105,13 +117,14 @@ export class IntegracaoCampanhaService {
     return integracaoCampanha;
   }
 
-  async create(dto: IntegracaoCampanhaCreateDto) {
+  async create(dto: IntegracaoCampanhaCreateDto, usuarioId: number) {
     const integracaoCampanha =
       await this.prismaService.integracaoCampanha.create({
         data: {
           nome: dto.nome,
           provedor: dto.provedor,
           config: dto.config as unknown as Prisma.InputJsonValue,
+          usuarioId,
         },
         select: { id: true },
       });

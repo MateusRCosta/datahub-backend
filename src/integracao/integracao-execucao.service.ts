@@ -53,7 +53,6 @@ export class IntegracaoExecucaoService {
       this.basesDadosService.garanteBaseDaIntegracao(
         prisma,
         integracao.id,
-        integracao.usuarioId,
         integracao.nome,
         integracao.responseScrap,
       ),

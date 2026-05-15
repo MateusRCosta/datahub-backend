@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Inject, Injectable, forwardRef } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { IntegracaoService } from './integracao.service';
 import {
@@ -12,6 +12,7 @@ import { PrismaService } from 'src/config/prisma.service';
 @Injectable()
 export class IntegracaoSchedularService {
   constructor(
+    @Inject(forwardRef(() => IntegracaoService))
     private readonly integracoesService: IntegracaoService,
     private readonly prismaService: PrismaService,
   ) {}

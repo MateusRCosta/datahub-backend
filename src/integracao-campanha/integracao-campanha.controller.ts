@@ -13,6 +13,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { Roles } from 'src/auth/decorators/permissoes';
+import { UsuarioAtual } from 'src/auth/decorators/usuario-atual.decorator';
+import type { Payload } from 'src/auth/types/payload';
 import { AlteraStatus } from 'src/common/dto/altera-status.dto';
 import { Permissao } from 'src/usuario/interfaces/permissao';
 import { IntegracaoCampanhaCreateDto } from './dto/integracao-campanha-create.dto';
@@ -38,8 +40,11 @@ export class IntegracaoCampanhaController {
   }
 
   @Post()
-  create(@Body() dto: IntegracaoCampanhaCreateDto) {
-    return this.integracaoCampanhaService.create(dto);
+  create(
+    @Body() dto: IntegracaoCampanhaCreateDto,
+    @UsuarioAtual() usuario: Payload,
+  ) {
+    return this.integracaoCampanhaService.create(dto, usuario.sub);
   }
 
   @Put(':id')

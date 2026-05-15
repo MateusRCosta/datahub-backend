@@ -42,6 +42,10 @@ export class UpchatConfigDto {
   @ValidateNested({ each: true })
   @Type(getBotaoDtoType)
   readonly botoes!: BotaoDto[];
+
+  @IsNumber()
+  @Max(65536)
+  readonly quantidadeVars!: number;
 }
 
 class BotaoBaseDto {

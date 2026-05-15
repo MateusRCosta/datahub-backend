@@ -12,6 +12,8 @@ import {
   Query,
 } from '@nestjs/common';
 import { Roles } from 'src/auth/decorators/permissoes';
+import { UsuarioAtual } from 'src/auth/decorators/usuario-atual.decorator';
+import type { Payload } from 'src/auth/types/payload';
 import { Permissao } from 'src/usuario/interfaces/permissao';
 import { ViewExecuteQueryDto } from './dto/view-execute-query.dto';
 import { ViewFindAllDto } from './dto/view-find-all-query.dto';
@@ -43,8 +45,8 @@ export class ViewController {
   }
 
   @Post()
-  create(@Body() dto: ViewCreateDto) {
-    return this.viewService.create(dto);
+  create(@Body() dto: ViewCreateDto, @UsuarioAtual() usuario: Payload) {
+    return this.viewService.create(dto, usuario.sub);
   }
 
   @Put(':id')

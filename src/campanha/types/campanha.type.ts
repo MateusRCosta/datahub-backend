@@ -1,4 +1,9 @@
-import { Campanha, IntegracaoCampanha, Prisma, Template } from '@prisma/client';
+import {
+  Campanha,
+  IntegracaoCampanha,
+  Template,
+  Usuario,
+} from '@prisma/client';
 
 export enum STATUS_CAMPANHA {
   ENVIADO = 'enviado',
@@ -23,7 +28,9 @@ export type CampanhaFindAll = Pick<
   | 'baseDeDadoId'
   | 'createdAt'
   | 'updatedAt'
->;
+> & {
+  readonly usuario: Pick<Usuario, 'id' | 'nome'>;
+};
 
 export type CampanhaFindById = CampanhaFindAll &
   Pick<Campanha, 'vars' | 'contatoCampo'> & {
@@ -37,15 +44,9 @@ export type CampanhaFindById = CampanhaFindAll &
 
 export type CampanhaExecucao = Pick<
   Campanha,
-  | 'id'
-  | 'nome'
-  | 'status'
-  | 'vars'
-  | 'contatoCampo'
-  | 'viewId'
-  | 'baseDeDadoId'
+  'id' | 'nome' | 'status' | 'vars' | 'contatoCampo' | 'viewId' | 'baseDeDadoId'
 > & {
-  readonly template: Pick<Template, 'config'> & {
+  readonly template: Pick<Template, 'config' | 'id'> & {
     readonly integracaoCampanha: Pick<
       IntegracaoCampanha,
       'provedor' | 'config'

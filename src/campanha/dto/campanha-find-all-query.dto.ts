@@ -38,4 +38,9 @@ export class CampanhaFindAllQueryDto extends PaginationQueryDto {
   @Type(() => Number)
   @IsInt()
   readonly baseDeDadoId?: number;
+
+  @IsOptional()
+  @Type(() => Number)
+  @IsInt()
+  readonly usuarioId?: number;
 }

@@ -203,7 +203,7 @@ export class ViewQueryBuilderService {
     return select.campos.map((campo) => {
       this.getFieldType(ctx, select.baseDadosId, campo.campo);
       const field = this.toJsonPath(campo.campo);
-      const outputAlias = this.toOutputAlias(select.baseDadosId, campo.rotulo);
+      const outputAlias = this.toOutputAlias(campo.rotulo);
 
       return `${alias}."dados" ->> '${field}' AS "${outputAlias}"`;
     });
@@ -435,9 +435,9 @@ export class ViewQueryBuilderService {
     return fieldName;
   }
 
-  private toOutputAlias(baseDadosId: number, rotulo: string): string {
+  private toOutputAlias(rotulo: string): string {
     this.assertSafeFieldName(rotulo);
-    return `b${baseDadosId}_${rotulo}`;
+    return `${rotulo}`;
   }
 
   private toSqlWhereOperator(operadorWhere: OPERADOR_WHERE): string {
