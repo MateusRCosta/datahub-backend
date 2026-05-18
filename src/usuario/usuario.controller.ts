@@ -18,6 +18,8 @@ import { UsuarioFindAllQueryDto } from './dto/usuario-find-all-query.dto';
 import { UsuarioUpdateDto } from './dto/usuario-update.dto';
 import { AdminOnly } from 'src/auth/decorators/permissoes';
 import { AlteraStatus } from 'src/common/dto/altera-status.dto';
+import { UsuarioAtual } from 'src/auth/decorators/usuario-atual.decorator';
+import type { Payload } from 'src/auth/types/payload';
 
 @Controller('usuarios')
 @AdminOnly()
@@ -55,15 +57,19 @@ export class UsuariosController {
   async alteraStatusAtivo(
     @Param('id', ParseIntPipe) id: number,
     @Body() alteraStatus: AlteraStatus,
+    @UsuarioAtual() usuario: Payload,
   ) {
-    await this.usuariosService.alteraStatusAtivo(id, alteraStatus);
+    await this.usuariosService.alteraStatusAtivo(id, alteraStatus, usuario.sub);
     return;
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id', ParseIntPipe) id: number) {
-    await this.usuariosService.delete(id);
+  async delete(
+    @Param('id', ParseIntPipe) id: number,
+    @UsuarioAtual() usuario: Payload,
+  ) {
+    await this.usuariosService.delete(id, usuario.sub);
     return;
   }
 }

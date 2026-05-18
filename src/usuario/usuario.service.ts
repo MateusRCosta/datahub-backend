@@ -272,35 +272,43 @@ export class UsuariosService {
     });
   }
 
-  async alteraStatusAtivo(id: number, alteraStatus: AlteraStatus) {
+  async alteraStatusAtivo(
+    id: number,
+    alteraStatus: AlteraStatus,
+    sessaoUsuarioId: number,
+  ) {
+    if (id === sessaoUsuarioId) {
+      throw new BadRequestException(
+        'Nao pode alterar o status do seu proprio usuario',
+      );
+    }
+
     await this.prismaService.$transaction(async (prisma) => {
       const result = await prisma.$executeRaw`
-       UPDATE "usuarios" SET 
-       "ativo" = ${alteraStatus.status}, "updatedAt" = NOW() 
-       WHERE id = ${id} AND "deletedAt" IS NULL`;
-
-      if (result === 0) throw new NotFoundException('Usuário não encontrado');
-
+     UPDATE "usuarios" SET 
+     "ativo" = ${alteraStatus.status}, "updatedAt" = NOW() 
+     WHERE id = ${id} AND "deletedAt" IS NULL AND id != ${sessaoUsuarioId}`;
+      if (result === 0) throw new NotFoundException('Usuario não encontrado');
       await this.revogarSessoesAtivas(prisma, id);
     });
   }
 
-  async delete(id: number) {
-    await this.prismaService.$transaction(async (prisma) => {
-      const email = await prisma.usuario.findFirst({
-        where: { id, deletedAt: null },
-        select: { email: true },
-      });
+  async delete(id: number, sessaoUsuarioId: number) {
+    if (id === sessaoUsuarioId) {
+      throw new BadRequestException('Nao pode excluir seu proprio usuario');
+    }
 
-      if (!email) throw new NotFoundException('Usuário não encontrado');
+    await this.prismaService.$transaction(async (prisma) => {
       const dataDeletado = new Date();
-      await prisma.usuario.update({
-        where: { id },
-        data: {
-          email: `${email.email}.${dataDeletado.getTime()}`,
-          deletedAt: dataDeletado,
-        },
-      });
+
+      const result = await prisma.$executeRaw`
+      UPDATE "usuarios" SET
+      "email" = "email" || '.' || ${dataDeletado.getTime()},
+      "deletedAt" = ${dataDeletado},
+      "updatedAt" = NOW()
+      WHERE "id" = ${id} AND "deletedAt" IS NULL`;
+
+      if (result === 0) throw new NotFoundException('Usuário não encontrado');
 
       await this.revogarSessoesAtivas(prisma, id);
     });
