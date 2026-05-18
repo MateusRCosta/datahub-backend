@@ -308,7 +308,7 @@ export class UsuariosService {
       "updatedAt" = NOW()
       WHERE "id" = ${id} AND "deletedAt" IS NULL`;
 
-      if (result === 0) throw new NotFoundException('Usuário não encontrado');
+      if (result === 0) throw new NotFoundException('Usuario nao encontrado');
 
       await this.revogarSessoesAtivas(prisma, id);
     });
