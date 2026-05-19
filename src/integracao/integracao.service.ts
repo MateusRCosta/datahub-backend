@@ -33,7 +33,7 @@ export class IntegracaoService {
     private integracaoSchedularService: IntegracaoSchedularService,
   ) {}
 
-  async findAll(query: IntegracaoFindAllQueryDto) {
+  async retornaTodos(query: IntegracaoFindAllQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
@@ -91,7 +91,7 @@ export class IntegracaoService {
     };
   }
 
-  async findById(id: number) {
+  async retornaPorId(id: number) {
     const integracao = await this.prismaService.integracao.findFirst({
       where: { id, deletedAt: null },
       select: {
@@ -136,7 +136,7 @@ export class IntegracaoService {
     return integracao;
   }
 
-  async create(dto: IntegracaoCreateDto, idUsuario: number) {
+  async cria(dto: IntegracaoCreateDto, idUsuario: number) {
     try {
       const integracao = await this.prismaService.integracao.create({
         data: {
@@ -176,7 +176,7 @@ export class IntegracaoService {
     }
   }
 
-  async update(
+  async atualiza(
     dto: IntegracaoUpdateDto,
     idUsuario: number,
     idIntegracao: number,
@@ -235,7 +235,7 @@ export class IntegracaoService {
     }
   }
 
-  async delete(idIntegracao: number, idUsuario: number) {
+  async exclui(idIntegracao: number, idUsuario: number) {
     try {
       void idUsuario;
 
@@ -263,7 +263,7 @@ export class IntegracaoService {
     }
   }
 
-  async alteraStatus(
+  async atualizaStatus(
     idIntegracao: number,
     alteraStatus: AlteraStatus,
     idUsuario: number,
@@ -298,7 +298,7 @@ export class IntegracaoService {
     }
   }
 
-  async ativaIntegracao(idIntegracao: number, idUsuario: number) {
+  async ativa(idIntegracao: number, idUsuario: number) {
     try {
       const integracao = await this.prismaService.integracao.findFirst({
         where: { id: idIntegracao, deletedAt: null },
@@ -319,7 +319,7 @@ export class IntegracaoService {
       );
 
       void this.integracaoExecucaoService
-        .ativaIntegracao(integracaoAtiva, idUsuario)
+        .ativa(integracaoAtiva, idUsuario)
         .catch((error: unknown) => {
           console.error(
             `Erro na execucao assincrona da integracao ${integracao.id}:`,
@@ -333,7 +333,7 @@ export class IntegracaoService {
     }
   }
 
-  async executaIntegracao(integracaoId: number, jobId: number): Promise<void> {
+  async executa(integracaoId: number, jobId: number): Promise<void> {
     const integracao =
       await this.buscaIntegracaoNaoDeletadaOuFalha(integracaoId);
 
@@ -342,7 +342,7 @@ export class IntegracaoService {
     }
 
     try {
-      await this.integracaoExecucaoService.executaIntegracao(integracao);
+      await this.integracaoExecucaoService.executa(integracao);
 
       await this.integracaoSchedularService.atualizaStatus(
         jobId,

@@ -19,7 +19,7 @@ async function bootstrap() {
   const config = new DocumentBuilder()
     .setTitle('API de desenvolvimento')
     .setDescription(
-      'Documentação da API do backend para desenvolvimento do frontend',
+      'Documentação da API do backend para desenvolvimento do frontend -- desabilitar em prod',
     )
     .setVersion('1.0')
     .build();

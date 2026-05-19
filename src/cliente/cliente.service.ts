@@ -18,6 +18,7 @@ import {
 } from './cliente.filter-config';
 import { ClientesCriacaoService } from './cliente-criacao.service';
 import { EstruturaBaseDadosDto } from 'src/base-dados/dto/bases-dados-estrutura.dto';
+import { normalizaDadosCliente } from './utils/dados-normalizer';
 
 @Injectable()
 export class ClientesService {
@@ -68,7 +69,15 @@ export class ClientesService {
     );
   }
 
-  async buscaTodos(query: ClienteFindAllQueryDto) {
+  private revalidaCliente(
+    dados: Record<string, unknown>,
+    estrutura: EstruturaBaseDadosDto[],
+  ) {
+    const { validacao } = normalizaDadosCliente(dados, estrutura);
+    return validacao;
+  }
+
+  async retornaTodos(query: ClienteFindAllQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
@@ -139,7 +148,7 @@ export class ClientesService {
     });
   }
 
-  async buscaPorId(id: number) {
+  async retornaPorId(id: number) {
     if (Number.isNaN(id)) {
       throw new BadRequestException('Id inválido');
     }
@@ -171,7 +180,12 @@ export class ClientesService {
         },
         select: {
           id: true,
-          baseDeDadosId: true,
+          baseDeDados: {
+            select: {
+              id: true,
+              estrutura: true,
+            },
+          },
           dados: true,
         },
       });
@@ -182,14 +196,14 @@ export class ClientesService {
         updatedAt: new Date(),
       };
 
-      if (dto.validacao !== undefined) {
-        data.validacao = dto.validacao as unknown as Prisma.InputJsonValue;
-      }
+      const validacao = this.revalidaCliente(
+        dto.dados,
+        cliente.baseDeDados.estrutura as unknown as EstruturaBaseDadosDto[],
+      );
 
-      if (dto.dados !== undefined) {
-        data.dados = dto.dados as Prisma.InputJsonValue;
-        data.hash = this.clientesCriacaoService.geraHash(dto.dados);
-      }
+      data.dados = dto.dados as Prisma.InputJsonValue;
+      data.hash = this.clientesCriacaoService.geraHash(dto.dados);
+      data.validacao = validacao as Prisma.InputJsonValue;
 
       try {
         return await prisma.cliente.update({
@@ -213,7 +227,7 @@ export class ClientesService {
     });
   }
 
-  async remove(id: number) {
+  async exclui(id: number) {
     await this.prismaService.$transaction(async (prisma) => {
       const cliente = await prisma.cliente.findFirst({
         where: {

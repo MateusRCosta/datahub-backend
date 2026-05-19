@@ -38,7 +38,7 @@ export class CampanhaService {
     private readonly clienteCampanhaService: ClienteCampanhaService,
   ) {}
 
-  async findAll(
+  async retornaTodos(
     query: CampanhaFindAllQueryDto,
   ): Promise<PaginatedResponse<CampanhaFindAll>> {
     const page = query.page ?? 1;
@@ -101,7 +101,7 @@ export class CampanhaService {
     return this.paginate(data, total, page, limit);
   }
 
-  async findById(id: number): Promise<CampanhaFindById> {
+  async retornaPorId(id: number): Promise<CampanhaFindById> {
     const campanha = await this.prismaService.campanha.findFirst({
       where: { id, deletedAt: null },
       select: {
@@ -147,7 +147,7 @@ export class CampanhaService {
     return campanha;
   }
 
-  async create(
+  async cria(
     dto: CampanhaCreateDto,
     usuarioId: number,
   ): Promise<{ id: number }> {
@@ -178,7 +178,7 @@ export class CampanhaService {
     });
   }
 
-  async update(id: number, dto: CampanhaUpdateDto): Promise<{ id: number }> {
+  async atualiza(id: number, dto: CampanhaUpdateDto): Promise<{ id: number }> {
     if (
       dto.nome === undefined &&
       dto.scheduledAt === undefined &&
@@ -259,7 +259,7 @@ export class CampanhaService {
     return { id };
   }
 
-  async delete(id: number): Promise<{ id: number }> {
+  async exclui(id: number): Promise<{ id: number }> {
     const result = await this.prismaService.campanha.updateMany({
       where: {
         id,
@@ -281,7 +281,7 @@ export class CampanhaService {
     return { id };
   }
 
-  async alteraStatus(
+  async atualizaStatus(
     id: number,
     novoStatus: STATUS_CAMPANHA,
   ): Promise<{ id: number }> {

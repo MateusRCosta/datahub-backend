@@ -30,7 +30,7 @@ export class ViewService {
     private readonly viewQueryBuilderService: ViewQueryBuilderService,
   ) {}
 
-  async findAll(
+  async retornaTodos(
     query: ViewFindAllDto,
   ): Promise<PaginatedResponse<ViewListItem>> {
     const page = query.page ?? 1;
@@ -88,7 +88,7 @@ export class ViewService {
     };
   }
 
-  async findById(id: number): Promise<ViewDetails> {
+  async retornaPorId(id: number): Promise<ViewDetails> {
     const view = await this.prismaService.view.findFirst({
       where: { id, deletedAt: null },
       select: {
@@ -114,7 +114,69 @@ export class ViewService {
     return view;
   }
 
-  async execute(
+  async cria(dto: ViewCreateDto, usuarioId: number): Promise<{ id: number }> {
+    const view = await this.prismaService.view.create({
+      data: {
+        nome: dto.nome,
+        descricao: dto.descricao ?? undefined,
+        config: dto.query as unknown as Prisma.InputJsonValue,
+        usuarioId,
+      },
+      select: {
+        id: true,
+      },
+    });
+
+    return view;
+  }
+
+  async atualiza(id: number, dto: ViewUpdateDto): Promise<{ id: number }> {
+    if (
+      dto.nome === undefined &&
+      dto.descricao === undefined &&
+      dto.query === undefined
+    ) {
+      throw new BadRequestException(
+        'Informe ao menos um campo para atualizar: nome ou query',
+      );
+    }
+
+    const result = await this.prismaService.view.updateMany({
+      where: { id, deletedAt: null },
+      data: {
+        nome: dto.nome,
+        descricao: dto.descricao,
+        config:
+          dto.query !== undefined
+            ? (dto.query as unknown as Prisma.InputJsonValue)
+            : undefined,
+        updatedAt: new Date(),
+      },
+    });
+
+    if (result.count === 0) {
+      throw new NotFoundException('View nao encontrada');
+    }
+
+    return { id };
+  }
+
+  async exclui(id: number): Promise<{ id: number }> {
+    const result = await this.prismaService.view.updateMany({
+      where: { id, deletedAt: null },
+      data: {
+        deletedAt: new Date(),
+      },
+    });
+
+    if (result.count === 0) {
+      throw new NotFoundException('View nao encontrada');
+    }
+
+    return { id };
+  }
+
+  async executa(
     id: number,
     query: ViewExecuteQueryDto,
   ): Promise<PaginatedResponse<Record<string, unknown>>> {
@@ -206,68 +268,6 @@ export class ViewService {
       ),
       params: builtQuery.params,
     };
-  }
-
-  async create(dto: ViewCreateDto, usuarioId: number): Promise<{ id: number }> {
-    const view = await this.prismaService.view.create({
-      data: {
-        nome: dto.nome,
-        descricao: dto.descricao ?? undefined,
-        config: dto.query as unknown as Prisma.InputJsonValue,
-        usuarioId,
-      },
-      select: {
-        id: true,
-      },
-    });
-
-    return view;
-  }
-
-  async update(id: number, dto: ViewUpdateDto): Promise<{ id: number }> {
-    if (
-      dto.nome === undefined &&
-      dto.descricao === undefined &&
-      dto.query === undefined
-    ) {
-      throw new BadRequestException(
-        'Informe ao menos um campo para atualizar: nome ou query',
-      );
-    }
-
-    const result = await this.prismaService.view.updateMany({
-      where: { id, deletedAt: null },
-      data: {
-        nome: dto.nome,
-        descricao: dto.descricao,
-        config:
-          dto.query !== undefined
-            ? (dto.query as unknown as Prisma.InputJsonValue)
-            : undefined,
-        updatedAt: new Date(),
-      },
-    });
-
-    if (result.count === 0) {
-      throw new NotFoundException('View nao encontrada');
-    }
-
-    return { id };
-  }
-
-  async delete(id: number): Promise<{ id: number }> {
-    const result = await this.prismaService.view.updateMany({
-      where: { id, deletedAt: null },
-      data: {
-        deletedAt: new Date(),
-      },
-    });
-
-    if (result.count === 0) {
-      throw new NotFoundException('View nao encontrada');
-    }
-
-    return { id };
   }
 
   private async findConfigById(id: number): Promise<QueryView> {

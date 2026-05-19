@@ -22,18 +22,18 @@ export class ClientesController {
   constructor(private readonly clientesService: ClientesService) {}
 
   @Get()
-  findAll(@Query() query: ClienteFindAllQueryDto) {
-    return this.clientesService.buscaTodos(query);
+  retornaTodos(@Query() query: ClienteFindAllQueryDto) {
+    return this.clientesService.retornaTodos(query);
   }
 
   @Get(':id')
-  findById(@Param('id', ParseIntPipe) id: number) {
-    return this.clientesService.buscaPorId(id);
+  retornaPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.clientesService.retornaPorId(id);
   }
 
   @Patch(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async update(
+  async atualiza(
     @Param('id', ParseIntPipe) id: number,
     @Body() updateDto: ClienteUpdateDto,
   ) {
@@ -43,8 +43,8 @@ export class ClientesController {
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id', ParseIntPipe) id: number) {
-    await this.clientesService.remove(id);
+  async exclui(@Param('id', ParseIntPipe) id: number) {
+    await this.clientesService.exclui(id);
     return;
   }
 }

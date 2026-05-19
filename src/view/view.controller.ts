@@ -27,42 +27,42 @@ export class ViewController {
   constructor(private readonly viewService: ViewService) {}
 
   @Get()
-  findAll(@Query() query: ViewFindAllDto) {
-    return this.viewService.findAll(query);
+  retornaTodos(@Query() query: ViewFindAllDto) {
+    return this.viewService.retornaTodos(query);
   }
 
   @Get(':id')
-  findById(@Param('id', ParseIntPipe) id: number) {
-    return this.viewService.findById(id);
+  retornaPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.viewService.retornaPorId(id);
   }
 
-  @Get(':id/execute')
-  execute(
+  @Get(':id/executa')
+  executa(
     @Param('id', ParseIntPipe) id: number,
     @Query() query: ViewExecuteQueryDto,
   ) {
-    return this.viewService.execute(id, query);
+    return this.viewService.executa(id, query);
   }
 
   @Post()
-  create(@Body() dto: ViewCreateDto, @UsuarioAtual() usuario: Payload) {
-    return this.viewService.create(dto, usuario.sub);
+  cria(@Body() dto: ViewCreateDto, @UsuarioAtual() usuario: Payload) {
+    return this.viewService.cria(dto, usuario.sub);
   }
 
   @Put(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async update(
+  async atualiza(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: ViewUpdateDto,
   ) {
-    await this.viewService.update(id, dto);
+    await this.viewService.atualiza(id, dto);
     return;
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id', ParseIntPipe) id: number) {
-    await this.viewService.delete(id);
+  async exclui(@Param('id', ParseIntPipe) id: number) {
+    await this.viewService.exclui(id);
     return;
   }
 }

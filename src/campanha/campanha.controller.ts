@@ -33,13 +33,13 @@ export class CampanhaController {
   ) {}
 
   @Get()
-  findAll(@Query() query: CampanhaFindAllQueryDto) {
-    return this.campanhaService.findAll(query);
+  retornaTodos(@Query() query: CampanhaFindAllQueryDto) {
+    return this.campanhaService.retornaTodos(query);
   }
 
   @Get(':id')
-  findById(@Param('id', ParseIntPipe) id: number) {
-    return this.campanhaService.findById(id);
+  retornaPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.campanhaService.retornaPorId(id);
   }
 
   @Get(':id/clientes')
@@ -51,34 +51,34 @@ export class CampanhaController {
   }
 
   @Post()
-  create(@Body() dto: CampanhaCreateDto, @UsuarioAtual() usuario: Payload) {
-    return this.campanhaService.create(dto, usuario.sub);
+  cria(@Body() dto: CampanhaCreateDto, @UsuarioAtual() usuario: Payload) {
+    return this.campanhaService.cria(dto, usuario.sub);
   }
 
   @Put(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async update(
+  async atualiza(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: CampanhaUpdateDto,
   ) {
-    await this.campanhaService.update(id, dto);
+    await this.campanhaService.atualiza(id, dto);
     return;
   }
 
   @Patch(':id/status')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async alteraStatus(
+  async atualizaStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: CampanhaAlteraStatusDto,
   ) {
-    await this.campanhaService.alteraStatus(id, dto.status);
+    await this.campanhaService.atualizaStatus(id, dto.status);
     return;
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id', ParseIntPipe) id: number) {
-    await this.campanhaService.delete(id);
+  async exclui(@Param('id', ParseIntPipe) id: number) {
+    await this.campanhaService.exclui(id);
     return;
   }
 }

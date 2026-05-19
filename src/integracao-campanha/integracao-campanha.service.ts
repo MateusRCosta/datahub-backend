@@ -27,7 +27,7 @@ export class IntegracaoCampanhaService {
     private readonly upchatService: UpchatService,
   ) {}
 
-  async findAll(query: IntegracaoCampanhaFindAllQueryDto) {
+  async retornaTodos(query: IntegracaoCampanhaFindAllQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
@@ -89,7 +89,7 @@ export class IntegracaoCampanhaService {
     };
   }
 
-  async findById(id: number) {
+  async retornaPorId(id: number) {
     const integracaoCampanha =
       await this.prismaService.integracaoCampanha.findFirst({
         where: { id, deletedAt: null },
@@ -117,7 +117,7 @@ export class IntegracaoCampanhaService {
     return integracaoCampanha;
   }
 
-  async create(dto: IntegracaoCampanhaCreateDto, usuarioId: number) {
+  async cria(dto: IntegracaoCampanhaCreateDto, usuarioId: number) {
     const integracaoCampanha =
       await this.prismaService.integracaoCampanha.create({
         data: {
@@ -132,7 +132,7 @@ export class IntegracaoCampanhaService {
     return integracaoCampanha;
   }
 
-  async update(id: number, dto: IntegracaoCampanhaUpdateDto) {
+  async atualiza(id: number, dto: IntegracaoCampanhaUpdateDto) {
     if (
       dto.nome === undefined &&
       dto.provedor === undefined &&
@@ -181,7 +181,7 @@ export class IntegracaoCampanhaService {
     });
   }
 
-  async delete(id: number) {
+  async exclui(id: number) {
     const result = await this.prismaService.integracaoCampanha.updateMany({
       where: { id, deletedAt: null },
       data: {
@@ -196,7 +196,7 @@ export class IntegracaoCampanhaService {
     return { id };
   }
 
-  async alteraStatus(id: number, status: boolean) {
+  async atualizaStatus(id: number, status: boolean) {
     const result = await this.prismaService.integracaoCampanha.updateMany({
       where: { id, deletedAt: null },
       data: {

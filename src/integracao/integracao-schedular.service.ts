@@ -25,7 +25,7 @@ export class IntegracaoSchedularService {
       if (!job) {
         return;
       }
-      await this.integracoesService.executaIntegracao(job.integracaoId, job.id);
+      await this.integracoesService.executa(job.integracaoId, job.id);
     }
   }
 

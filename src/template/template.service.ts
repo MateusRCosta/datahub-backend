@@ -28,7 +28,7 @@ export class TemplateService {
     private readonly integracaoCampanhaService: IntegracaoCampanhaService,
   ) {}
 
-  async create(
+  async cria(
     dto: CreateTemplateDto,
     usuarioId: number,
   ): Promise<{ id: number }> {
@@ -52,7 +52,7 @@ export class TemplateService {
     return template;
   }
 
-  async findAll(
+  async retornaTodos(
     query: TemplateFindAllQueryDto,
   ): Promise<PaginatedResponse<TemplateFindAll>> {
     const page = query.page ?? 1;
@@ -118,7 +118,7 @@ export class TemplateService {
     };
   }
 
-  async findById(id: number): Promise<TemplateFindOne> {
+  async retornaPorId(id: number): Promise<TemplateFindOne> {
     const template = await this.prismaService.template.findFirst({
       where: { id, deletedAt: null },
       select: {
@@ -150,7 +150,7 @@ export class TemplateService {
     return template;
   }
 
-  async update(id: number, dto: UpdateTemplateDto): Promise<{ id: number }> {
+  async atualiza(id: number, dto: UpdateTemplateDto): Promise<{ id: number }> {
     if (
       dto.nome === undefined &&
       dto.provedor === undefined &&
@@ -187,7 +187,7 @@ export class TemplateService {
     return { id };
   }
 
-  async delete(id: number): Promise<{ id: number }> {
+  async exclui(id: number): Promise<{ id: number }> {
     const result = await this.prismaService.template.updateMany({
       where: { id, deletedAt: null },
       data: {

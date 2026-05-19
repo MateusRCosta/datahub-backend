@@ -27,49 +27,49 @@ export class UsuariosController {
   constructor(private usuariosService: UsuariosService) {}
 
   @Get()
-  findAll(@Query() query: UsuarioFindAllQueryDto) {
-    return this.usuariosService.findAll(query);
+  retornaTodos(@Query() query: UsuarioFindAllQueryDto) {
+    return this.usuariosService.retornaTodos(query);
   }
 
   @Get(':id')
-  findById(@Param('id', ParseIntPipe) id: number) {
-    return this.usuariosService.findById(id);
+  retornaPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.usuariosService.retornaPorId(id);
   }
 
   @Post()
-  async create(@Body() usuarioCreateDto: UsuarioCreateDto) {
-    await this.usuariosService.create(usuarioCreateDto);
+  async cria(@Body() usuarioCreateDto: UsuarioCreateDto) {
+    await this.usuariosService.cria(usuarioCreateDto);
     return;
   }
 
   @Put(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async update(
+  async atualiza(
     @Param('id', ParseIntPipe) id: number,
     @Body() usuarioUpdateDto: UsuarioUpdateDto,
   ) {
-    await this.usuariosService.update(usuarioUpdateDto, id);
+    await this.usuariosService.atualiza(usuarioUpdateDto, id);
     return;
   }
 
   @Patch(':id/ativo')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async alteraStatusAtivo(
+  async atualizaStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() alteraStatus: AlteraStatus,
     @UsuarioAtual() usuario: Payload,
   ) {
-    await this.usuariosService.alteraStatusAtivo(id, alteraStatus, usuario.sub);
+    await this.usuariosService.atualizaStatus(id, alteraStatus, usuario.sub);
     return;
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(
+  async exclui(
     @Param('id', ParseIntPipe) id: number,
     @UsuarioAtual() usuario: Payload,
   ) {
-    await this.usuariosService.delete(id, usuario.sub);
+    await this.usuariosService.exclui(id, usuario.sub);
     return;
   }
 }

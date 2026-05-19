@@ -74,7 +74,7 @@ export class AuthService {
     if (!accessToken || !alterarSenhaDto) throw new ForbiddenException();
     const payload = this.jwtService.decode<Payload>(accessToken);
 
-    return await this.usuariosService.alterarSenha(
+    return await this.usuariosService.atualizaSenha(
       payload.sub,
       alterarSenhaDto.antigaSenha,
       alterarSenhaDto.novaSenha,

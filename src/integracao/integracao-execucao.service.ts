@@ -35,14 +35,12 @@ export class IntegracaoExecucaoService {
     private basesDadosService: BasesDadosService,
   ) {}
 
-  async ativaIntegracao(integracao: Integracao, _idUsuario: number) {
+  async ativa(integracao: Integracao, _idUsuario: number) {
     void _idUsuario;
-    await this.executaIntegracao(integracao);
+    await this.executa(integracao);
   }
 
-  async executaIntegracao(
-    integracao: Integracao,
-  ): Promise<ResultadoExecucao<void>> {
+  async executa(integracao: Integracao): Promise<ResultadoExecucao<void>> {
     const controleLimite = this.criaControleLimiteRequisicao(
       integracao.limitDeRequisicaoPorMin,
     );

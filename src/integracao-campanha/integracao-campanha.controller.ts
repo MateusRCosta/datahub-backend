@@ -30,47 +30,47 @@ export class IntegracaoCampanhaController {
   ) {}
 
   @Get()
-  findAll(@Query() query: IntegracaoCampanhaFindAllQueryDto) {
-    return this.integracaoCampanhaService.findAll(query);
+  retornaTodos(@Query() query: IntegracaoCampanhaFindAllQueryDto) {
+    return this.integracaoCampanhaService.retornaTodos(query);
   }
 
   @Get(':id')
-  findById(@Param('id', ParseIntPipe) id: number) {
-    return this.integracaoCampanhaService.findById(id);
+  retornaPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.integracaoCampanhaService.retornaPorId(id);
   }
 
   @Post()
-  create(
+  cria(
     @Body() dto: IntegracaoCampanhaCreateDto,
     @UsuarioAtual() usuario: Payload,
   ) {
-    return this.integracaoCampanhaService.create(dto, usuario.sub);
+    return this.integracaoCampanhaService.cria(dto, usuario.sub);
   }
 
   @Put(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async update(
+  async atualiza(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: IntegracaoCampanhaUpdateDto,
   ) {
-    await this.integracaoCampanhaService.update(id, dto);
+    await this.integracaoCampanhaService.atualiza(id, dto);
     return;
   }
 
   @Patch(':id/status')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async alteraStatus(
+  async atualizaStatus(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: AlteraStatus,
   ) {
-    await this.integracaoCampanhaService.alteraStatus(id, dto.status);
+    await this.integracaoCampanhaService.atualizaStatus(id, dto.status);
     return;
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id', ParseIntPipe) id: number) {
-    await this.integracaoCampanhaService.delete(id);
+  async exclui(@Param('id', ParseIntPipe) id: number) {
+    await this.integracaoCampanhaService.exclui(id);
     return;
   }
 }

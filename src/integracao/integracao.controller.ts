@@ -25,52 +25,52 @@ export class IntegracaoController {
   constructor(private integracaoService: IntegracaoService) {}
 
   @Get()
-  async findAll(@Query() query: IntegracaoFindAllQueryDto) {
-    return this.integracaoService.findAll(query);
+  async retornaTodos(@Query() query: IntegracaoFindAllQueryDto) {
+    return this.integracaoService.retornaTodos(query);
   }
 
   @Get(':id')
-  async findById(@Param('id') idIntegracao: number) {
-    return this.integracaoService.findById(idIntegracao);
+  async retornaPorId(@Param('id') idIntegracao: number) {
+    return this.integracaoService.retornaPorId(idIntegracao);
   }
 
   @Post()
-  async create(
+  async cria(
     @Body() dto: IntegracaoCreateDto,
     @UsuarioAtual() usuario: Payload,
   ) {
     const idUsuario = usuario.sub;
-    const idIntegracao = await this.integracaoService.create(dto, idUsuario);
+    const idIntegracao = await this.integracaoService.cria(dto, idUsuario);
     return { id: idIntegracao.id };
   }
 
   @Put(':id')
-  async update(
+  async atualiza(
     @Body() dto: IntegracaoUpdateDto,
     @UsuarioAtual() usuario: Payload,
     @Param('id') idIntegracao: number,
   ) {
     const idUsuario = usuario.sub;
-    await this.integracaoService.update(dto, idUsuario, idIntegracao);
+    await this.integracaoService.atualiza(dto, idUsuario, idIntegracao);
   }
 
   @Delete(':id')
-  async delete(
+  async exclui(
     @UsuarioAtual() usuario: Payload,
     @Param('id') idIntegracao: number,
   ) {
     const idUsuario = usuario.sub;
-    await this.integracaoService.delete(idIntegracao, idUsuario);
+    await this.integracaoService.exclui(idIntegracao, idUsuario);
   }
 
   @Patch(':id/status')
-  async alteraStatus(
+  async atualizaStatus(
     @UsuarioAtual() usuario: Payload,
     @Param('id') idIntegracao: number,
     @Body() alteraStatus: AlteraStatus,
   ) {
     const idUsuario = usuario.sub;
-    await this.integracaoService.alteraStatus(
+    await this.integracaoService.atualizaStatus(
       idIntegracao,
       alteraStatus,
       idUsuario,
@@ -78,11 +78,11 @@ export class IntegracaoController {
   }
 
   @Patch(':id/ativar')
-  async ativarIntegracao(
+  async ativa(
     @UsuarioAtual() usuario: Payload,
     @Param('id') idIntegracao: number,
   ) {
     const idUsuario = usuario.sub;
-    await this.integracaoService.ativaIntegracao(idIntegracao, idUsuario);
+    await this.integracaoService.ativa(idIntegracao, idUsuario);
   }
 }

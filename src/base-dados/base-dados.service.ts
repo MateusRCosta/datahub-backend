@@ -35,7 +35,7 @@ export class BasesDadosService {
     private readonly clientesService: ClientesService,
   ) {}
 
-  async findAll(query: BasesDadosFindAllQueryDto) {
+  async retornaTodos(query: BasesDadosFindAllQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
@@ -100,7 +100,7 @@ export class BasesDadosService {
     };
   }
 
-  async findById(id: number) {
+  async retornaPorId(id: number) {
     const baseDeDados = await this.prismaService.baseDeDados.findUnique({
       where: { id, deletedAt: null },
       select: {
@@ -212,11 +212,7 @@ export class BasesDadosService {
     );
   }
 
-  async create(
-    dto: BasesDadosCreateDto,
-    csvBuffer: Buffer,
-    usuarioId?: number,
-  ) {
+  async cria(dto: BasesDadosCreateDto, csvBuffer: Buffer, usuarioId?: number) {
     const csvStream = Readable.from(csvBuffer);
     const separator = this.detectCsvSeparator(csvBuffer);
 
@@ -268,7 +264,7 @@ export class BasesDadosService {
     };
   }
 
-  async update(id: number, dto: BasesDadosUpdateDto) {
+  async atualiza(id: number, dto: BasesDadosUpdateDto) {
     if (dto.nome === undefined && dto.estrutura === undefined) {
       throw new BadRequestException(
         'Informe ao menos um campo para atualizar: nome ou estrutura',
@@ -322,7 +318,7 @@ export class BasesDadosService {
     });
   }
 
-  async delete(id: number) {
+  async exclui(id: number) {
     return this.prismaService.$transaction(async (prisma) => {
       const baseAtual = await prisma.baseDeDados.findFirst({
         where: {

@@ -26,34 +26,34 @@ export class TemplateController {
   constructor(private readonly templateService: TemplateService) {}
 
   @Get()
-  findAll(@Query() query: TemplateFindAllQueryDto) {
-    return this.templateService.findAll(query);
+  retornaTodos(@Query() query: TemplateFindAllQueryDto) {
+    return this.templateService.retornaTodos(query);
   }
 
   @Get(':id')
-  findById(@Param('id', ParseIntPipe) id: number) {
-    return this.templateService.findById(id);
+  retornaPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.templateService.retornaPorId(id);
   }
 
   @Post()
-  create(@Body() dto: CreateTemplateDto, @UsuarioAtual() usuario: Payload) {
-    return this.templateService.create(dto, usuario.sub);
+  cria(@Body() dto: CreateTemplateDto, @UsuarioAtual() usuario: Payload) {
+    return this.templateService.cria(dto, usuario.sub);
   }
 
   @Put(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async update(
+  async atualiza(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: UpdateTemplateDto,
   ) {
-    await this.templateService.update(id, dto);
+    await this.templateService.atualiza(id, dto);
     return;
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id', ParseIntPipe) id: number) {
-    await this.templateService.delete(id);
+  async exclui(@Param('id', ParseIntPipe) id: number) {
+    await this.templateService.exclui(id);
     return;
   }
 }

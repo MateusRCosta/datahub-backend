@@ -32,17 +32,17 @@ export class BasesDadosController {
   constructor(private readonly basesDadosService: BasesDadosService) {}
 
   @Get()
-  findAll(@Query() query: BasesDadosFindAllQueryDto) {
-    return this.basesDadosService.findAll(query);
+  retornaTodos(@Query() query: BasesDadosFindAllQueryDto) {
+    return this.basesDadosService.retornaTodos(query);
   }
 
   @Get(':id')
-  findById(@Param('id', ParseIntPipe) id: number) {
-    return this.basesDadosService.findById(id);
+  retornaPorId(@Param('id', ParseIntPipe) id: number) {
+    return this.basesDadosService.retornaPorId(id);
   }
 
   @Post()
-  async create(@Req() req: FastifyRequest & RequestCookies) {
+  async cria(@Req() req: FastifyRequest & RequestCookies) {
     const data = await req.file();
 
     if (!data) throw new BadRequestException('Arquivo é obrigatório');
@@ -90,23 +90,23 @@ export class BasesDadosController {
       throw new BadRequestException(errors);
     }
 
-    return this.basesDadosService.create(dto, buffer, req.user?.sub);
+    return this.basesDadosService.cria(dto, buffer, req.user?.sub);
   }
 
   @Patch(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async update(
+  async atualiza(
     @Param('id', ParseIntPipe) id: number,
     @Body() dto: BasesDadosUpdateDto,
   ) {
-    await this.basesDadosService.update(id, dto);
+    await this.basesDadosService.atualiza(id, dto);
     return;
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
-  async delete(@Param('id', ParseIntPipe) id: number) {
-    await this.basesDadosService.delete(id);
+  async exclui(@Param('id', ParseIntPipe) id: number) {
+    await this.basesDadosService.exclui(id);
     return;
   }
 }

@@ -44,7 +44,7 @@ export class UsuariosService {
     });
   }
 
-  async findAll(query: UsuarioFindAllQueryDto): Promise<
+  async retornaTodos(query: UsuarioFindAllQueryDto): Promise<
     PaginatedResponse<{
       id: number;
       nome: string;
@@ -109,7 +109,7 @@ export class UsuariosService {
     };
   }
 
-  async findById(id: number) {
+  async retornaPorId(id: number) {
     if (Number.isNaN(id)) {
       throw new BadRequestException('Id inválido');
     }
@@ -163,7 +163,7 @@ export class UsuariosService {
     return usuario;
   }
 
-  async create(usuarioDto: UsuarioCreateDto) {
+  async cria(usuarioDto: UsuarioCreateDto) {
     return await this.prismaService.$transaction(async (prisma) => {
       const { nome, email, senha, admin, permissoes } = usuarioDto;
 
@@ -192,7 +192,7 @@ export class UsuariosService {
     });
   }
 
-  async update(updateDto: UsuarioUpdateDto, id: number) {
+  async atualiza(updateDto: UsuarioUpdateDto, id: number) {
     return await this.prismaService.$transaction(async (prisma) => {
       const usuario = await prisma.usuario.findFirst({
         where: {
@@ -232,7 +232,7 @@ export class UsuariosService {
     });
   }
 
-  async alterarSenha(id: number, antigaSenha: string, novaSenha: string) {
+  async atualizaSenha(id: number, antigaSenha: string, novaSenha: string) {
     return await this.prismaService.$transaction(async (prisma) => {
       const usuario = await prisma.usuario.findFirst({
         where: {
@@ -272,7 +272,7 @@ export class UsuariosService {
     });
   }
 
-  async alteraStatusAtivo(
+  async atualizaStatus(
     id: number,
     alteraStatus: AlteraStatus,
     sessaoUsuarioId: number,
@@ -293,7 +293,7 @@ export class UsuariosService {
     });
   }
 
-  async delete(id: number, sessaoUsuarioId: number) {
+  async exclui(id: number, sessaoUsuarioId: number) {
     if (id === sessaoUsuarioId) {
       throw new BadRequestException('Nao pode excluir seu proprio usuario');
     }
