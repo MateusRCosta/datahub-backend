@@ -1,16 +1,18 @@
 import {
+  BaseDeDados,
   Campanha,
   IntegracaoCampanha,
   Template,
   Usuario,
+  View,
 } from '@prisma/client';
 
 export enum STATUS_CAMPANHA {
-  ENVIADO = 'enviado',
+  ENVIADA = 'enviada',
   EM_ENVIO = 'emEnvio',
   PAUSA = 'pausa',
-  CANCELADO = 'cancelado',
-  NAO_ENVIADO = 'naoEnviado',
+  CANCELADA = 'cancelada',
+  PENDENTE = 'pendente',
 }
 
 export type CampanhaVars = Record<string, string>;
@@ -23,23 +25,23 @@ export type CampanhaFindAll = Pick<
   | 'scheduledAt'
   | 'executedAt'
   | 'finishedAt'
-  | 'templateId'
-  | 'viewId'
-  | 'baseDeDadoId'
   | 'createdAt'
   | 'updatedAt'
 > & {
-  readonly usuario: Pick<Usuario, 'id' | 'nome'>;
+  readonly usuario: Pick<Usuario, 'nome'>;
+} & {
+  readonly baseDeDados: Pick<BaseDeDados, 'nome'> | null;
+} & {
+  readonly view: Pick<View, 'nome'> | null;
+} & {
+  readonly template: Pick<Template, 'nome'> & {
+    readonly integracaoCampanha: Pick<IntegracaoCampanha, 'nome' | 'provedor'>;
+  };
 };
 
 export type CampanhaFindById = CampanhaFindAll &
   Pick<Campanha, 'vars' | 'contatoCampo'> & {
-    readonly template: Pick<Template, 'id' | 'nome'> & {
-      readonly integracaoCampanha: Pick<
-        IntegracaoCampanha,
-        'id' | 'nome' | 'provedor'
-      >;
-    };
+    readonly template: Pick<Template, 'id'>;
   };
 
 export type CampanhaExecucao = Pick<

@@ -201,6 +201,17 @@ export class TemplateService {
 
     return { id };
   }
+
+  async existePorId(id: number): Promise<boolean> {
+    const idEcontrado = await this.prismaService.template.findFirst({
+      where: { id, deletedAt: null },
+      select: {
+        id: true,
+      },
+    });
+    return idEcontrado !== null;
+  }
+
   private async validaIntegracaoCampanhaEProvedor(
     integracaoCampanhaId: number,
     provedor: PROVEDOR_INTEGRACAO_CAMPANHA,

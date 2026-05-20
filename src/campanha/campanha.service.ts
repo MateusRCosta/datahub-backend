@@ -30,12 +30,16 @@ import {
   STATUS_CAMPANHA,
 } from './types/campanha.type';
 import { ClienteCampanhaService } from './cliente-campanha.service';
+import { TemplateService } from 'src/template/template.service';
+import { ViewService } from 'src/view/view.service';
 
 @Injectable()
 export class CampanhaService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly clienteCampanhaService: ClienteCampanhaService,
+    private readonly templateService: TemplateService,
+    private readonly viewService: ViewService,
   ) {}
 
   async retornaTodos(
@@ -82,12 +86,29 @@ export class CampanhaService {
           scheduledAt: true,
           executedAt: true,
           finishedAt: true,
-          templateId: true,
-          viewId: true,
-          baseDeDadoId: true,
+          template: {
+            select: {
+              nome: true,
+              integracaoCampanha: {
+                select: {
+                  nome: true,
+                  provedor: true,
+                },
+              },
+            },
+          },
+          view: {
+            select: {
+              nome: true,
+            },
+          },
+          baseDeDados: {
+            select: {
+              nome: true,
+            },
+          },
           usuario: {
             select: {
-              id: true,
               nome: true,
             },
           },
@@ -113,14 +134,14 @@ export class CampanhaService {
         scheduledAt: true,
         executedAt: true,
         finishedAt: true,
-        templateId: true,
-        viewId: true,
-        baseDeDadoId: true,
+        view: {
+          select: { nome: true },
+        },
+        baseDeDados: {
+          select: { nome: true },
+        },
         usuario: {
-          select: {
-            id: true,
-            nome: true,
-          },
+          select: { nome: true },
         },
         createdAt: true,
         updatedAt: true,
@@ -130,7 +151,6 @@ export class CampanhaService {
             nome: true,
             integracaoCampanha: {
               select: {
-                id: true,
                 nome: true,
                 provedor: true,
               },
@@ -154,8 +174,13 @@ export class CampanhaService {
     this.validaScheduledAt(dto.scheduledAt);
     this.validaCampoReferencia(dto.contatoCampo, 'contatoCampo');
     this.validaVars(dto.vars);
-    this.validaFonteExclusiva(dto.viewId, dto.baseDeDadoId);
-    await this.validaTemplate(dto.templateId);
+
+    if (!(await this.templateService.existePorId(dto.templateId)))
+      throw new BadRequestException('O template informado nao foi encontrado');
+
+    if (dto.baseDeDadoId && dto.viewId)
+      throw new BadRequestException('Informe ou uma base ou uma view');
+
     await this.validaFonteECampos(
       dto.viewId,
       dto.baseDeDadoId,
@@ -209,10 +234,10 @@ export class CampanhaService {
     }
 
     if (
-      (campanhaAtual.status as STATUS_CAMPANHA) !== STATUS_CAMPANHA.NAO_ENVIADO
+      (campanhaAtual.status as STATUS_CAMPANHA) !== STATUS_CAMPANHA.PENDENTE
     ) {
       throw new BadRequestException(
-        'Campanha so pode ser alterada quando estiver NAO_ENVIADO',
+        'Campanha so pode ser alterada quando estiver PENDENTE',
       );
     }
 
@@ -231,12 +256,17 @@ export class CampanhaService {
 
     this.validaCampoReferencia(contatoCampo, 'contatoCampo');
     this.validaVars(vars);
-    this.validaFonteExclusiva(viewId, baseDeDadoId);
-    await this.validaTemplate(templateId);
+
+    if (!(await this.templateService.existePorId(templateId)))
+      throw new BadRequestException('O template informado nao foi encontrado');
+
+    if (dto.baseDeDadoId && dto.viewId)
+      throw new BadRequestException('Informe ou uma base ou uma view');
+
     await this.validaFonteECampos(viewId, baseDeDadoId, contatoCampo, vars);
 
     const result = await this.prismaService.campanha.updateMany({
-      where: { id, deletedAt: null, status: STATUS_CAMPANHA.NAO_ENVIADO },
+      where: { id, deletedAt: null, status: STATUS_CAMPANHA.PENDENTE },
       data: {
         nome: dto.nome,
         scheduledAt: dto.scheduledAt,
@@ -264,7 +294,7 @@ export class CampanhaService {
       where: {
         id,
         deletedAt: null,
-        status: STATUS_CAMPANHA.NAO_ENVIADO,
+        status: STATUS_CAMPANHA.PENDENTE,
       },
       data: {
         deletedAt: new Date(),
@@ -274,7 +304,7 @@ export class CampanhaService {
 
     if (result.count === 0) {
       throw new BadRequestException(
-        'Campanha nao encontrada ou status diferente de NAO_ENVIADO',
+        'Campanha nao encontrada ou status diferente de PENDENTE',
       );
     }
 
@@ -302,11 +332,11 @@ export class CampanhaService {
         status: novoStatus,
         updatedAt: new Date(),
         finishedAt:
-          novoStatus === STATUS_CAMPANHA.CANCELADO ? new Date() : undefined,
+          novoStatus === STATUS_CAMPANHA.CANCELADA ? new Date() : undefined,
       },
     });
 
-    if (novoStatus === STATUS_CAMPANHA.CANCELADO) {
+    if (novoStatus === STATUS_CAMPANHA.CANCELADA) {
       await this.clienteCampanhaService.cancelaPendentes(id);
     }
 
@@ -320,7 +350,7 @@ export class CampanhaService {
     vars: CampanhaVars,
   ): Promise<void> {
     const referencias = [
-      this.getReferencia(contatoCampo),
+      contatoCampo,
       ...Object.values(vars)
         .filter((value) => value.startsWith(CAMPO_REFERENCIA_PREFIX))
         .map((value) => this.getReferencia(value)),
@@ -340,10 +370,11 @@ export class CampanhaService {
     }
 
     if (viewId !== undefined && viewId !== null) {
-      const query = await this.buscaQueryView(viewId);
+      const query = await this.viewService.buscaConfigPorId(viewId);
+      if (!query) throw new BadRequestException('View nao encontrada');
 
       for (const referencia of referencias) {
-        if (!this.resolveViewAlias(query, referencia)) {
+        if (!this.resolveViewAlias(query as QueryView, referencia)) {
           throw new BadRequestException(
             `Campo "${referencia}" nao existe na view`,
           );
@@ -367,38 +398,6 @@ export class CampanhaService {
     );
   }
 
-  private async validaTemplate(templateId: number): Promise<void> {
-    const template = await this.prismaService.template.findFirst({
-      where: { id: templateId, deletedAt: null },
-      select: {
-        id: true,
-        integracaoCampanha: {
-          select: {
-            id: true,
-            deletedAt: true,
-          },
-        },
-      },
-    });
-
-    if (!template || template.integracaoCampanha.deletedAt !== null) {
-      throw new NotFoundException('Template nao encontrado');
-    }
-  }
-
-  private async buscaQueryView(viewId: number): Promise<QueryView> {
-    const view = await this.prismaService.view.findFirst({
-      where: { id: viewId, deletedAt: null },
-      select: { config: true },
-    });
-
-    if (!view) {
-      throw new NotFoundException('View nao encontrada');
-    }
-
-    return view.config as unknown as QueryView;
-  }
-
   private validaScheduledAt(scheduledAt: Date): void {
     if (scheduledAt.getTime() < Date.now()) {
       throw new BadRequestException(
@@ -407,26 +406,9 @@ export class CampanhaService {
     }
   }
 
-  private validaFonteExclusiva(
-    viewId?: number | null,
-    baseDeDadoId?: number | null,
-  ): void {
-    const temView = viewId !== undefined && viewId !== null;
-    const temBase = baseDeDadoId !== undefined && baseDeDadoId !== null;
-
-    if (temView === temBase) {
-      throw new BadRequestException(
-        'Informe exatamente uma origem: viewId ou baseDeDadoId',
-      );
-    }
-  }
-
   private validaCampoReferencia(value: string, campo: string): void {
-    if (
-      !value.startsWith(CAMPO_REFERENCIA_PREFIX) ||
-      this.getReferencia(value) === ''
-    ) {
-      throw new BadRequestException(`${campo} deve iniciar com #`);
+    if (value.trim() === '') {
+      throw new BadRequestException(`${campo} nao deve ser nulo`);
     }
   }
 

@@ -65,7 +65,7 @@ export class ClienteCampanhaService {
 
     await this.prismaService.clienteCampanha.createMany({
       data: clienteIds.map((clienteId) => ({
-        status: STATUS_CLIENTE_CAMPANHA.NAO_ENVIADO,
+        status: STATUS_CLIENTE_CAMPANHA.PENDENTE,
         campanhaId,
         clienteId,
       })),
@@ -79,7 +79,7 @@ export class ClienteCampanhaService {
     return this.prismaService.clienteCampanha.findMany({
       where: {
         campanhaId,
-        status: STATUS_CLIENTE_CAMPANHA.NAO_ENVIADO,
+        status: STATUS_CLIENTE_CAMPANHA.PENDENTE,
       },
       take: CLIENTES_CAMPANHA_BATCH_SIZE,
       orderBy: { id: 'asc' },
@@ -119,7 +119,7 @@ export class ClienteCampanhaService {
         campanhaId,
         status: {
           in: [
-            STATUS_CLIENTE_CAMPANHA.NAO_ENVIADO,
+            STATUS_CLIENTE_CAMPANHA.PENDENTE,
             STATUS_CLIENTE_CAMPANHA.EM_ENVIO,
           ],
         },
@@ -150,7 +150,7 @@ export class ClienteCampanhaService {
         campanhaId,
         status: {
           in: [
-            STATUS_CLIENTE_CAMPANHA.NAO_ENVIADO,
+            STATUS_CLIENTE_CAMPANHA.PENDENTE,
             STATUS_CLIENTE_CAMPANHA.EM_ENVIO,
           ],
         },

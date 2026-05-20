@@ -41,7 +41,7 @@ export class CampanhaSchedulerService {
         SELECT c."id"
         FROM "campanhas" c
         WHERE c."deletedAt" IS NULL
-          AND c."status" = ${STATUS_CAMPANHA.NAO_ENVIADO}
+          AND c."status" = ${STATUS_CAMPANHA.PENDENTE}
           AND c."scheduledAt" <= NOW()
         ORDER BY c."scheduledAt" ASC
         FOR UPDATE SKIP LOCKED

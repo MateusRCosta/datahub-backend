@@ -67,6 +67,7 @@ export class BasesDadosService {
         select: {
           id: true,
           nome: true,
+          estrutura: true,
           integracao: {
             select: {
               nome: true,
@@ -108,13 +109,11 @@ export class BasesDadosService {
         nome: true,
         integracao: {
           select: {
-            id: true,
             nome: true,
           },
         },
         usuario: {
           select: {
-            id: true,
             nome: true,
           },
         },

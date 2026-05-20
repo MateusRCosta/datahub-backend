@@ -62,8 +62,8 @@ export class CampanhaJobService {
 
       if (
         (campanha.status as STATUS_CAMPANHA) === STATUS_CAMPANHA.PAUSA ||
-        (campanha.status as STATUS_CAMPANHA) === STATUS_CAMPANHA.CANCELADO ||
-        (campanha.status as STATUS_CAMPANHA) === STATUS_CAMPANHA.ENVIADO
+        (campanha.status as STATUS_CAMPANHA) === STATUS_CAMPANHA.CANCELADA ||
+        (campanha.status as STATUS_CAMPANHA) === STATUS_CAMPANHA.ENVIADA
       ) {
         console.log('[CampanhaJobService] Execucao interrompida pelo status', {
           id,
@@ -358,7 +358,7 @@ export class CampanhaJobService {
         status: STATUS_CAMPANHA.EM_ENVIO,
       },
       data: {
-        status: STATUS_CAMPANHA.ENVIADO,
+        status: STATUS_CAMPANHA.ENVIADA,
         finishedAt: new Date(),
         updatedAt: new Date(),
       },

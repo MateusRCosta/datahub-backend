@@ -1,7 +1,7 @@
 import { Cliente, ClienteCampanha, Prisma } from '@prisma/client';
 
 export enum STATUS_CLIENTE_CAMPANHA {
-  NAO_ENVIADO = 'naoEnviado',
+  PENDENTE = 'pendente',
   ENVIADO = 'enviado',
   EM_ENVIO = 'emEnvio',
   ERRO = 'erro',

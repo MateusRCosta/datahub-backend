@@ -8,9 +8,15 @@ import { CampanhaJobService } from './campanha-job.service';
 import { CampanhaSchedulerService } from './campanha-scheduler.service';
 import { CampanhaService } from './campanha.service';
 import { ClienteCampanhaService } from './cliente-campanha.service';
+import { TemplateModule } from 'src/template/template.module';
 
 @Module({
-  imports: [IntegracaoCampanhaModule, ViewModule, ClientesModule],
+  imports: [
+    IntegracaoCampanhaModule,
+    ViewModule,
+    ClientesModule,
+    TemplateModule,
+  ],
   controllers: [CampanhaController],
   providers: [
     CampanhaService,

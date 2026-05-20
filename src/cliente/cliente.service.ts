@@ -96,7 +96,7 @@ export class ClientesService {
       query.orderBy,
       query.order,
       clientesOrderByFields,
-      'createdAt',
+      'id',
     );
 
     const [data, total] = await this.prismaService.$transaction([
@@ -109,10 +109,7 @@ export class ClientesService {
           id: true,
           dados: true,
           validacao: true,
-          hash: true,
           baseDeDadosId: true,
-          createdAt: true,
-          updatedAt: true,
         },
       }),
       this.prismaService.cliente.count({ where }),
@@ -159,7 +156,6 @@ export class ClientesService {
         id: true,
         dados: true,
         validacao: true,
-        hash: true,
         baseDeDadosId: true,
         createdAt: true,
         updatedAt: true,

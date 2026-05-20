@@ -8,5 +8,6 @@ import { IntegracaoCampanhaModule } from 'src/integracao-campanha/integracao-cam
   imports: [IntegracaoCampanhaModule],
   controllers: [TemplateController],
   providers: [TemplateService, PrismaService],
+  exports: [TemplateService],
 })
 export class TemplateModule {}
