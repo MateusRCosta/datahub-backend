@@ -77,7 +77,7 @@ export type FilterNode = {
 export type ViewListItem = {
   id: number;
   nome: string;
-  usuario: Pick<Usuario, 'id' | 'nome'>;
+  usuario: Pick<Usuario, 'nome'>;
   createdAt: Date;
   updatedAt: Date | null;
 };

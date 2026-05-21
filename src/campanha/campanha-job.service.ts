@@ -9,10 +9,7 @@ import { ClientesService } from 'src/cliente/cliente.service';
 import { PrismaService } from 'src/config/prisma.service';
 import { IntegracaoCampanhaService } from 'src/integracao-campanha/integracao-campanha.service';
 import { PROVEDOR_INTEGRACAO_CAMPANHA } from 'src/integracao-campanha/types/provedor-integracao-campanha.type';
-import {
-  UpchatCliente,
-  UpchatConfig,
-} from 'src/integracao-campanha/types/upchat.type';
+import { UpchatConfig } from 'src/integracao-campanha/types/upchat.type';
 import { QueryView, Select } from 'src/view/types/view.types';
 import { ViewService } from 'src/view/view.service';
 import {
@@ -31,6 +28,7 @@ import {
   STATUS_CLIENTE_CAMPANHA,
 } from './types/cliente-campanha.type';
 import { ViewRowCampanha } from './types/campanha-job.type';
+import { Mensagem } from 'src/integracao-campanha/types/execucao.type';
 
 @Injectable()
 export class CampanhaJobService {
@@ -47,11 +45,6 @@ export class CampanhaJobService {
 
     await this.populaClientesCampanha(id);
     console.log('[CampanhaJobService] Clientes da campanha populados', { id });
-
-    await this.clienteCampanhaService.marcaEmEnvioComoErro(id);
-    console.log('[CampanhaJobService] Clientes em envio marcados como erro', {
-      id,
-    });
 
     while (true) {
       const campanha = await this.buscaCampanhaExecucao(id);
@@ -121,7 +114,7 @@ export class CampanhaJobService {
             pendentes.map((item) => item.clienteId),
           )
         : new Map<number, ViewRowCampanha>();
-    const mensagens: UpchatCliente[] = [];
+    const mensagens: Mensagem[] = [];
     const clienteCampanhaIds: number[] = [];
     const clienteCampanhaComErro: number[] = [];
 
@@ -141,7 +134,7 @@ export class CampanhaJobService {
       }
 
       mensagens.push({
-        telefone,
+        meio: telefone,
         parametros: this.resolveParametros(vars, accessor),
       });
       clienteCampanhaIds.push(pendente.id);
@@ -182,11 +175,11 @@ export class CampanhaJobService {
           .provedor as PROVEDOR_INTEGRACAO_CAMPANHA
       ) {
         case PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT:
-          await this.integracaoCampanhaService.integracaoCampanhaExecucao({
-            provedor: this.getProvedorUpchat(campanha),
-            config: this.getUpchatConfig(
-              campanha.template.integracaoCampanha.config,
-            ),
+          await this.integracaoCampanhaService.executa({
+            provedor: campanha.template.integracaoCampanha
+              .provedor as PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT,
+            config: campanha.template.integracaoCampanha
+              .config as unknown as UpchatConfig,
             clientes: mensagens,
             templateId: campanha.template.id,
             nomeCampanha: campanha.nome,
@@ -496,37 +489,6 @@ export class CampanhaJobService {
     accessor: (referencia: string) => unknown,
   ): string {
     return this.toStringOrEmpty(accessor(this.getReferencia(value)));
-  }
-
-  private getUpchatConfig(config: Prisma.JsonValue): UpchatConfig {
-    const record = this.toRecord(config);
-    const url = record['url'];
-    const queueId = record['queueId'];
-    const apiKey = record['apiKey'];
-
-    if (
-      typeof url !== 'string' ||
-      typeof queueId !== 'number' ||
-      typeof apiKey !== 'string'
-    ) {
-      throw new BadRequestException('Config da integracao Upchat invalida');
-    }
-
-    return { url, queueId, apiKey };
-  }
-
-  private getProvedorUpchat(
-    campanha: CampanhaExecucao,
-  ): PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT {
-    if (
-      (campanha.template.integracaoCampanha
-        .provedor as PROVEDOR_INTEGRACAO_CAMPANHA) !==
-      PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT
-    ) {
-      throw new BadRequestException('Provedor de campanha nao suportado');
-    }
-
-    return PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT;
   }
 
   private async buscaQueryView(viewId: number): Promise<QueryView> {

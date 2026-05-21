@@ -22,6 +22,7 @@ import { ViewCreateDto } from './dto/view-create.dto';
 import { ViewUpdateDto } from './dto/view-update.dto';
 import { ViewQueryBuilderService } from './view-query-builder.service';
 import { viewFilterConfig, viewOrderByFields } from './view.filter-config';
+import { paginate } from 'src/common/utils/paginated-response';
 
 @Injectable()
 export class ViewService {
@@ -64,7 +65,6 @@ export class ViewService {
           nome: true,
           usuario: {
             select: {
-              id: true,
               nome: true,
             },
           },
@@ -75,17 +75,7 @@ export class ViewService {
       this.prismaService.view.count({ where }),
     ]);
 
-    return {
-      data,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page * limit < total,
-        hasPreviousPage: page > 1,
-      },
-    };
+    return paginate(data, total, page, limit);
   }
 
   async retornaPorId(id: number): Promise<ViewDetails> {
@@ -98,7 +88,6 @@ export class ViewService {
         config: true,
         usuario: {
           select: {
-            id: true,
             nome: true,
           },
         },

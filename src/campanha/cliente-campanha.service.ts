@@ -1,4 +1,4 @@
-import { Injectable, NotFoundException } from '@nestjs/common';
+import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PaginatedResponse } from 'src/common/interfaces/paginated-response.interface';
 import { PrismaService } from 'src/config/prisma.service';
@@ -9,6 +9,7 @@ import {
   ClienteCampanhaPendente,
   STATUS_CLIENTE_CAMPANHA,
 } from './types/cliente-campanha.type';
+import { paginate } from 'src/common/utils/paginated-response';
 
 @Injectable()
 export class ClienteCampanhaService {
@@ -18,8 +19,6 @@ export class ClienteCampanhaService {
     campanhaId: number,
     query: CampanhaClientesQueryDto,
   ): Promise<PaginatedResponse<ClienteCampanhaFindAll>> {
-    await this.garanteCampanhaExiste(campanhaId);
-
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
@@ -52,7 +51,7 @@ export class ClienteCampanhaService {
       this.prismaService.clienteCampanha.count({ where }),
     ]);
 
-    return this.paginate(data, total, page, limit);
+    return paginate(data, total, page, limit);
   }
 
   async criaClientesCampanha(
@@ -131,19 +130,6 @@ export class ClienteCampanhaService {
     });
   }
 
-  async marcaEmEnvioComoErro(campanhaId: number): Promise<void> {
-    await this.prismaService.clienteCampanha.updateMany({
-      where: {
-        campanhaId,
-        status: STATUS_CLIENTE_CAMPANHA.EM_ENVIO,
-      },
-      data: {
-        status: STATUS_CLIENTE_CAMPANHA.ERRO,
-        updatedAt: new Date(),
-      },
-    });
-  }
-
   async contaPendentesOuEmEnvio(campanhaId: number): Promise<number> {
     return this.prismaService.clienteCampanha.count({
       where: {
@@ -156,35 +142,5 @@ export class ClienteCampanhaService {
         },
       },
     });
-  }
-
-  private async garanteCampanhaExiste(campanhaId: number): Promise<void> {
-    const campanha = await this.prismaService.campanha.findFirst({
-      where: { id: campanhaId, deletedAt: null },
-      select: { id: true },
-    });
-
-    if (!campanha) {
-      throw new NotFoundException('Campanha nao encontrada');
-    }
-  }
-
-  private paginate<T>(
-    data: T[],
-    total: number,
-    page: number,
-    limit: number,
-  ): PaginatedResponse<T> {
-    return {
-      data,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page * limit < total,
-        hasPreviousPage: page > 1,
-      },
-    };
   }
 }

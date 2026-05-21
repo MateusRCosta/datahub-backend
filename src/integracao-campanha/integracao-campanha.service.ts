@@ -228,7 +228,7 @@ export class IntegracaoCampanhaService {
     return integracaoCampanha.provedor as PROVEDOR_INTEGRACAO_CAMPANHA;
   }
 
-  async integracaoCampanhaExecucao(dto: AtivaExecucao): Promise<void> {
+  async executa(dto: AtivaExecucao): Promise<void> {
     switch (dto.provedor) {
       case PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT:
         await this.upchatService.enviaMensagem(dto);

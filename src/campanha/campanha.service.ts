@@ -32,6 +32,7 @@ import {
 import { ClienteCampanhaService } from './cliente-campanha.service';
 import { TemplateService } from 'src/template/template.service';
 import { ViewService } from 'src/view/view.service';
+import { paginate } from 'src/common/utils/paginated-response';
 
 @Injectable()
 export class CampanhaService {
@@ -119,7 +120,7 @@ export class CampanhaService {
       this.prismaService.campanha.count({ where }),
     ]);
 
-    return this.paginate(data, total, page, limit);
+    return paginate(data, total, page, limit);
   }
 
   async retornaPorId(id: number): Promise<CampanhaFindById> {
@@ -498,24 +499,5 @@ export class CampanhaService {
     }
 
     return value as unknown as EstruturaBaseDadosDto[];
-  }
-
-  private paginate<T>(
-    data: T[],
-    total: number,
-    page: number,
-    limit: number,
-  ): PaginatedResponse<T> {
-    return {
-      data,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page * limit < total,
-        hasPreviousPage: page > 1,
-      },
-    };
   }
 }

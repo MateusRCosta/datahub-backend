@@ -19,6 +19,7 @@ import {
 import { ClientesCriacaoService } from './cliente-criacao.service';
 import { EstruturaBaseDadosDto } from 'src/base-dados/dto/bases-dados-estrutura.dto';
 import { normalizaDadosCliente } from './utils/dados-normalizer';
+import { paginate } from 'src/common/utils/paginated-response';
 
 @Injectable()
 export class ClientesService {
@@ -115,17 +116,7 @@ export class ClientesService {
       this.prismaService.cliente.count({ where }),
     ]);
 
-    return {
-      data,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page * limit < total,
-        hasPreviousPage: page > 1,
-      },
-    };
+    return paginate(data, total, page, limit);
   }
 
   async buscaIdsPorBase(

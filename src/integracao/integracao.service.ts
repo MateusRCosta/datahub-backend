@@ -23,6 +23,7 @@ import { IntegracaoFindAllQueryDto } from './dto/integracao-find-all-query.dto';
 import { IntegracaoUpdateDto } from './dto/integracao-update-dto';
 import { STATUS_JOB } from './types/integracoes-execucao.type';
 import { IntegracaoSchedularService } from './integracao-schedular.service';
+import { paginate } from 'src/common/utils/paginated-response';
 
 @Injectable()
 export class IntegracaoService {
@@ -66,7 +67,6 @@ export class IntegracaoService {
           nome: true,
           usuario: {
             select: {
-              id: true,
               nome: true,
             },
           },
@@ -78,17 +78,7 @@ export class IntegracaoService {
       this.prismaService.integracao.count({ where }),
     ]);
 
-    return {
-      data,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page * limit < total,
-        hasPreviousPage: page > 1,
-      },
-    };
+    return paginate(data, total, page, limit);
   }
 
   async retornaPorId(id: number) {

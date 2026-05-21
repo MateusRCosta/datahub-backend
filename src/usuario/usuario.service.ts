@@ -21,6 +21,7 @@ import {
   usuariosOrderByFields,
 } from './usuario.filter-config';
 import { AlteraStatus } from 'src/common/dto/altera-status.dto';
+import { paginate } from 'src/common/utils/paginated-response';
 
 @Injectable()
 export class UsuariosService {
@@ -96,17 +97,7 @@ export class UsuariosService {
       this.prismaService.usuario.count({ where }),
     ]);
 
-    return {
-      data,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page * limit < total,
-        hasPreviousPage: page > 1,
-      },
-    };
+    return paginate(data, total, page, limit);
   }
 
   async retornaPorId(id: number) {

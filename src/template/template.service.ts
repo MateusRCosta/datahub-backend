@@ -20,6 +20,7 @@ import {
 import { IntegracaoCampanhaService } from 'src/integracao-campanha/integracao-campanha.service';
 import { TemplateFindAll, TemplateFindOne } from './types/template.types';
 import { PROVEDOR_INTEGRACAO_CAMPANHA } from 'src/integracao-campanha/types/provedor-integracao-campanha.type';
+import { paginate } from 'src/common/utils/paginated-response';
 
 @Injectable()
 export class TemplateService {
@@ -94,7 +95,6 @@ export class TemplateService {
           },
           usuario: {
             select: {
-              id: true,
               nome: true,
             },
           },
@@ -105,17 +105,7 @@ export class TemplateService {
       this.prismaService.template.count({ where }),
     ]);
 
-    return {
-      data,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page * limit < total,
-        hasPreviousPage: page > 1,
-      },
-    };
+    return paginate(data, total, page, limit);
   }
 
   async retornaPorId(id: number): Promise<TemplateFindOne> {

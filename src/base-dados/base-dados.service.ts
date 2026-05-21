@@ -21,6 +21,7 @@ import { Readable } from 'stream';
 import { ClientesService } from 'src/cliente/cliente.service';
 import { IntegracaoResponseDto } from 'src/integracao/dto/integracao-response-dto';
 import { EstruturaBaseDadosDto } from './dto/bases-dados-estrutura.dto';
+import { paginate } from 'src/common/utils/paginated-response';
 
 type ResultadoPersistenciaClientes = {
   criados: number;
@@ -88,17 +89,7 @@ export class BasesDadosService {
       this.prismaService.baseDeDados.count({ where }),
     ]);
 
-    return {
-      data,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page * limit < total,
-        hasPreviousPage: page > 1,
-      },
-    };
+    return paginate(data, total, page, limit);
   }
 
   async retornaPorId(id: number) {

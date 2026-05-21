@@ -1,5 +1,4 @@
 import {
-  UpchatCliente,
   UpchatExecuta,
   UpchatMessagesResponse,
   UpchatStatusResponse,
@@ -12,6 +11,7 @@ import {
   Injectable,
   InternalServerErrorException,
 } from '@nestjs/common';
+import { Mensagem } from '../types/execucao.type';
 
 @Injectable()
 export class UpchatService {
@@ -98,7 +98,7 @@ export class UpchatService {
   }
 
   constroiBodyMensagem(
-    clientesRaw: UpchatCliente[],
+    clientesRaw: Mensagem[],
     templateId: number,
     nomeCampanha: string,
   ) {
@@ -108,7 +108,7 @@ export class UpchatService {
 
       return {
         templateId: templateId,
-        number: cliente.telefone,
+        number: cliente.meio,
         country: 'BR',
         campaignName: nomeCampanha,
         varsdata: varsTemplate,

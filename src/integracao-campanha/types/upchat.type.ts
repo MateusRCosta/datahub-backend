@@ -1,3 +1,4 @@
+import { Mensagem } from './execucao.type';
 import { PROVEDOR_INTEGRACAO_CAMPANHA } from './provedor-integracao-campanha.type';
 
 export enum STATUS_ENVIO {
@@ -16,15 +17,10 @@ export type UpchatConfig = {
   apiKey: string;
 };
 
-export type UpchatCliente = {
-  telefone: string;
-  parametros: string[];
-};
-
 export type UpchatExecuta = {
   provedor: PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT;
   config: UpchatConfig;
-  clientes: UpchatCliente[];
+  clientes: Mensagem[];
   templateId: number;
   nomeCampanha: string;
 };
