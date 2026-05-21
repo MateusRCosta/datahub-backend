@@ -5,6 +5,7 @@ export enum TipoCampo {
   UTC = 'UTC',
   MM_DD_YYYY = 'MM_DD_YYYY',
   DD_MM_YYYY = 'DD_MM_YYYY',
+  YYYY_MM_DD = 'YYYY_MM_DD',
   EMAIL = 'EMAIL',
   TELEFONE = 'TELEFONE',
 }

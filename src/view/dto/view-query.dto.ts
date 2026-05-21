@@ -7,6 +7,7 @@ import {
   IsInt,
   IsOptional,
   IsString,
+  Max,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
@@ -46,6 +47,10 @@ export class SelectDto {
   @Type(() => Number)
   @IsInt()
   readonly baseDadosId!: number;
+
+  @Type(() => Number)
+  @Max(4)
+  readonly joinIndex!: number;
 
   @IsArray()
   @ValidateNested({ each: true })

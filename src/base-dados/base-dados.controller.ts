@@ -7,11 +7,11 @@ import {
   HttpCode,
   HttpStatus,
   Param,
-  Patch,
   ParseIntPipe,
   Post,
   Query,
   Req,
+  Put,
 } from '@nestjs/common';
 import type { FastifyRequest } from 'fastify';
 import { Roles } from '../auth/decorators/permissoes';
@@ -93,7 +93,7 @@ export class BasesDadosController {
     return this.basesDadosService.cria(dto, buffer, req.user?.sub);
   }
 
-  @Patch(':id')
+  @Put(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async atualiza(
     @Param('id', ParseIntPipe) id: number,

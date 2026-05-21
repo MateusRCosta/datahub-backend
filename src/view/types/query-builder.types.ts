@@ -8,11 +8,11 @@ export type BuiltQuery = {
 };
 
 export type QueryContext = {
-  readonly aliasesByBaseDadosId: Map<number, string>;
+  readonly aliasesByKey: Map<string, string>;
+  readonly joinIndexParaBaseDadosId: Map<number, number>;
   readonly estruturasByBaseDadosId: Map<number, Map<string, TipoCampo>>;
   readonly params: unknown[];
 };
-
 export type RuntimeJoin = Join & {
   readonly fromBaseDadosId?: number;
 };

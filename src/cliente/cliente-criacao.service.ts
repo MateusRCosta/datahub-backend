@@ -203,19 +203,46 @@ export class ClientesCriacaoService {
       },
     });
 
+    const dataAtualizacao = new Date();
+
+    const dadosCases: Prisma.Sql[] = [];
+    const validacaoCases: Prisma.Sql[] = [];
+    const ids: number[] = [];
+
     for (const cliente of clientes) {
       const dadosComoObjeto = this.converteParaRegistro(cliente.dados);
-      const { validacao } = normalizaDadosCliente(dadosComoObjeto, estrutura);
+      const { dados, validacao } = normalizaDadosCliente(
+        dadosComoObjeto,
+        estrutura,
+      );
+      ids.push(cliente.id);
 
-      await prisma.cliente.update({
-        where: { id: cliente.id },
-        data: {
-          validacao: validacao as Prisma.InputJsonValue,
-          updatedAt: new Date(),
-        },
-      });
+      dadosCases.push(
+        Prisma.sql`
+          WHEN id = ${cliente.id}
+          THEN ${JSON.stringify(dados)}::jsonb
+        `,
+      );
+
+      validacaoCases.push(
+        Prisma.sql`
+          WHEN id = ${cliente.id}
+          THEN ${JSON.stringify(validacao)}::jsonb
+        `,
+      );
     }
-
+    await prisma.$executeRaw`
+      UPDATE clientes
+      SET
+        dados = CASE
+          ${Prisma.join(dadosCases, '\n')}
+        END,
+        validacao = CASE
+          ${Prisma.join(validacaoCases, '\n')}
+        END,
+        "updatedAt" = ${dataAtualizacao}
+      WHERE id IN (${Prisma.join(ids)});
+    `;
     return clientes.length;
   }
 

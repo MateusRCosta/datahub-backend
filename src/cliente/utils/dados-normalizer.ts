@@ -81,8 +81,7 @@ function parseString(rawValue: string): ParseResultado {
 }
 
 function parseDate(rawValue: string, type: TipoCampo): ParseResultado {
-  const value = rawValue.trim();
-
+  const value = rawValue.trim().replace(/-/g, '/').replace(/_/g, '/');
   if (type === TipoCampo.UTC) {
     if (Number.isNaN(Date.parse(value))) {
       return {
@@ -95,24 +94,12 @@ function parseDate(rawValue: string, type: TipoCampo): ParseResultado {
     return { ok: true, value };
   }
 
-  const match = value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  const match =
+    type === TipoCampo.YYYY_MM_DD
+      ? value.match(/^(\d{4})\/(\d{2})\/(\d{2})$/)
+      : value.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+
   if (!match) {
-    return { ok: false, code: 'INVALID_DATE', message: 'Data invalida', value };
-  }
-
-  const first = Number(match[1]);
-  const second = Number(match[2]);
-  const year = Number(match[3]);
-  const month = type === TipoCampo.MM_DD_YYYY ? first : second;
-  const day = type === TipoCampo.MM_DD_YYYY ? second : first;
-
-  const date = new Date(Date.UTC(year, month - 1, day));
-
-  if (
-    date.getUTCFullYear() === year &&
-    date.getUTCMonth() === month - 1 &&
-    date.getUTCDate() === day
-  ) {
     return { ok: false, code: 'INVALID_DATE', message: 'Data invalida', value };
   }
 
@@ -139,6 +126,7 @@ function parseByType(
     case TipoCampo.UTC:
     case TipoCampo.MM_DD_YYYY:
     case TipoCampo.DD_MM_YYYY:
+    case TipoCampo.YYYY_MM_DD:
       return parseDate(rawValue, tipoNormalizado);
     default:
       return parseText(rawValue);

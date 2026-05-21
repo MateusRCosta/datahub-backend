@@ -6,7 +6,6 @@ import {
   BaseMetadata,
   BuiltQuery,
   QueryContext,
-  RuntimeJoin,
 } from './types/query-builder.types';
 import {
   Filter,
@@ -22,38 +21,37 @@ import {
 
 const MAX_JOINS = 4;
 const MAX_DEPTH = 3;
-const FIELD_NAME_PATTERN = /^[a-zA-Z0-9_]+$/;
+const FIELD_NAME_PATTERN = /^[\p{L}\p{N}_\/\-" ]+$/u;
 
 @Injectable()
 export class ViewQueryBuilderService {
   constructor(private readonly prismaService: PrismaService) {}
 
   async build(query: QueryView): Promise<BuiltQuery> {
-    this.validateLimits(query);
+    this.validarLimites(query);
 
-    const baseDadosIds = this.getDeclaredBaseDadosIds(query);
-    const estruturasByBaseDadosId =
-      await this.loadEstruturasByBaseDadosId(baseDadosIds);
-    const aliasesByBaseDadosId = this.buildAliases(query);
+    const baseDadosIds = this.obterBaseDadosIds(query);
+    const estruturasByBaseDadosId = await this.carregarEstruturas(baseDadosIds);
+    const { aliasesByKey, joinIndexParaBaseDadosId } =
+      this.construirAliases(query);
+
     const ctx: QueryContext = {
-      aliasesByBaseDadosId,
+      aliasesByKey,
+      joinIndexParaBaseDadosId,
       estruturasByBaseDadosId,
       params: [],
     };
 
     const sql = [
-      this.buildSelectClause(query, ctx),
-      this.buildFromClause(query, ctx),
-      this.buildJoinClauses(query, ctx),
-      this.buildWhereClause(query, ctx),
+      this.construirSelect(query, ctx),
+      this.construirFrom(query, ctx),
+      this.construirJoins(query, ctx),
+      this.construirWhere(query, ctx),
     ]
       .filter(Boolean)
       .join(' ');
 
-    return {
-      sql,
-      params: ctx.params,
-    };
+    return { sql, params: ctx.params };
   }
 
   async execute(query: QueryView): Promise<Record<string, unknown>[]> {
@@ -65,51 +63,111 @@ export class ViewQueryBuilderService {
     );
   }
 
-  private validateLimits(query: QueryView): void {
-    const joinsCount = query.joins?.length ?? 0;
+  // VALIDACAO
 
-    if (joinsCount > MAX_JOINS) {
+  private validarLimites(query: QueryView): void {
+    if ((query.joins?.length ?? 0) > MAX_JOINS) {
       throw new BadRequestException(
         `A view permite no maximo ${MAX_JOINS} joins`,
       );
     }
 
     if (query.groupFilter) {
-      this.validateTopLevelGroupFilters(query.groupFilter);
+      this.validarGruposFiltro(query.groupFilter);
     }
   }
 
-  private validateTopLevelGroupFilters(groupFilters: GroupFilter[]): void {
-    // if (groupFilters.length === 0) {
-    //   throw new BadRequestException('Lista de filtros nao pode ser vazia');
-    // }
-
+  private validarGruposFiltro(groupFilters: GroupFilter[]): void {
     for (const groupFilter of groupFilters) {
-      this.validateGroupDepth(groupFilter, 1);
+      this.validarProfundidade(groupFilter);
     }
   }
 
-  private validateGroupDepth(groupFilter: GroupFilter, depth: number): void {
-    if (depth > MAX_DEPTH) {
+  private validarProfundidade(raiz: GroupFilter): void {
+    const fila: { node: GroupFilter; depth: number }[] = [
+      { node: raiz, depth: 1 },
+    ];
+
+    while (fila.length > 0) {
+      const { node, depth } = fila.shift()!;
+
+      if (depth > MAX_DEPTH) {
+        throw new BadRequestException(
+          `A view permite filtros com profundidade maxima de ${MAX_DEPTH}`,
+        );
+      }
+
+      if (node.type !== TIPO_FILTRO.GROUP) continue;
+
+      if (node.groupFilter.length === 0) {
+        throw new BadRequestException('Grupo de filtros nao pode ser vazio');
+      }
+
+      for (const child of node.groupFilter) {
+        fila.push({ node: child, depth: depth + 1 });
+      }
+    }
+  }
+
+  // ALIASES
+
+  private construirAliases(query: QueryView): {
+    aliasesByKey: Map<string, string>;
+    joinIndexParaBaseDadosId: Map<number, number>;
+  } {
+    const aliasesByKey = new Map<string, string>();
+    const joinIndexParaBaseDadosId = new Map<number, number>();
+
+    aliasesByKey.set(this.chaveAlias(query.from.baseDadosId, 0), 'c0');
+    joinIndexParaBaseDadosId.set(0, query.from.baseDadosId);
+
+    query.joins?.forEach((join, index) => {
+      const joinIndex = index + 1;
+      aliasesByKey.set(
+        this.chaveAlias(join.baseDadosIdJoin, joinIndex),
+        `c${joinIndex}`,
+      );
+      joinIndexParaBaseDadosId.set(joinIndex, join.baseDadosIdJoin);
+    });
+
+    return { aliasesByKey, joinIndexParaBaseDadosId };
+  }
+
+  private chaveAlias(baseDadosId: number, joinIndex: number): string {
+    return `${baseDadosId}:${joinIndex}`;
+  }
+
+  private obterAlias(
+    ctx: QueryContext,
+    baseDadosId: number,
+    joinIndex: number,
+  ): string {
+    const alias = ctx.aliasesByKey.get(this.chaveAlias(baseDadosId, joinIndex));
+
+    if (!alias) {
       throw new BadRequestException(
-        `A view permite filtros com profundidade maxima de ${MAX_DEPTH}`,
+        `Base de dados ${baseDadosId} com joinIndex ${joinIndex} nao foi declarada na view`,
       );
     }
 
-    if (groupFilter.type !== TIPO_FILTRO.GROUP) {
-      return;
-    }
-
-    if (groupFilter.groupFilter.length === 0) {
-      throw new BadRequestException('Grupo de filtros nao pode ser vazio');
-    }
-
-    for (const child of groupFilter.groupFilter) {
-      this.validateGroupDepth(child, depth + 1);
-    }
+    return alias;
   }
 
-  private getDeclaredBaseDadosIds(query: QueryView): number[] {
+  private resolverBaseDadosId(ctx: QueryContext, joinIndex: number): number {
+    const baseDadosId = ctx.joinIndexParaBaseDadosId.get(joinIndex);
+
+    if (baseDadosId === undefined) {
+      throw new BadRequestException(
+        `joinIndex ${joinIndex} nao foi declarado na view`,
+      );
+    }
+
+    return baseDadosId;
+  }
+
+  // ESTRUTURA
+
+  private obterBaseDadosIds(query: QueryView): number[] {
     const ids = [
       query.from.baseDadosId,
       ...(query.joins?.map((join) => join.baseDadosIdJoin) ?? []),
@@ -118,35 +176,12 @@ export class ViewQueryBuilderService {
     return [...new Set(ids)];
   }
 
-  private buildAliases(query: QueryView): Map<number, string> {
-    const aliasesByBaseDadosId = new Map<number, string>();
-    aliasesByBaseDadosId.set(query.from.baseDadosId, 'c0');
-
-    query.joins?.forEach((join, index) => {
-      if (aliasesByBaseDadosId.has(join.baseDadosIdJoin)) {
-        throw new BadRequestException(
-          `Base de dados ${join.baseDadosIdJoin} foi declarada mais de uma vez`,
-        );
-      }
-
-      aliasesByBaseDadosId.set(join.baseDadosIdJoin, `c${index + 1}`);
-    });
-
-    return aliasesByBaseDadosId;
-  }
-
-  private async loadEstruturasByBaseDadosId(
+  private async carregarEstruturas(
     baseDadosIds: number[],
   ): Promise<Map<number, Map<string, TipoCampo>>> {
     const bases = await this.prismaService.baseDeDados.findMany({
-      where: {
-        id: { in: baseDadosIds },
-        deletedAt: null,
-      },
-      select: {
-        id: true,
-        estrutura: true,
-      },
+      where: { id: { in: baseDadosIds }, deletedAt: null },
+      select: { id: true, estrutura: true },
     });
 
     if (bases.length !== baseDadosIds.length) {
@@ -170,38 +205,37 @@ export class ViewQueryBuilderService {
     const fields = new Map<string, TipoCampo>();
 
     for (const item of base.estrutura as unknown as EstruturaBaseDadosDto[]) {
-      this.assertSafeFieldName(item.cabecalho);
-      fields.set(item.cabecalho, this.normalizeTipoCampo(item.tipo));
+      this.assertNomeCampoSeguro(item.cabecalho);
+      fields.set(item.cabecalho, this.normalizarTipoCampo(item.tipo));
     }
 
     return fields;
   }
 
-  private normalizeTipoCampo(tipo?: TipoCampo): TipoCampo {
-    if (!tipo) {
-      return TipoCampo.TEXTO;
-    }
-
-    return tipo;
+  private normalizarTipoCampo(tipo?: TipoCampo): TipoCampo {
+    return tipo ?? TipoCampo.TEXTO;
   }
 
-  private buildSelectClause(query: QueryView, ctx: QueryContext): string {
-    const selectFields = query.select?.flatMap((select) =>
-      this.buildSelectFields(select, ctx),
+  // SELECT
+
+  private construirSelect(query: QueryView, ctx: QueryContext): string {
+    const campos = query.select?.flatMap((select) =>
+      this.construirCamposSelect(select, ctx),
     );
 
-    if (!selectFields || selectFields.length === 0) {
+    if (!campos || campos.length === 0) {
       return 'SELECT 1 AS "_vazio"';
     }
 
-    return `SELECT ${selectFields.join(', ')}`;
+    return `SELECT ${campos.join(', ')}`;
   }
 
-  private buildSelectFields(select: Select, ctx: QueryContext): string[] {
-    const alias = this.getAlias(ctx, select.baseDadosId);
+  private construirCamposSelect(select: Select, ctx: QueryContext): string[] {
+    const baseDadosId = this.resolverBaseDadosId(ctx, select.joinIndex);
+    const alias = this.obterAlias(ctx, baseDadosId, select.joinIndex);
 
     return select.campos.map((campo) => {
-      this.getFieldType(ctx, select.baseDadosId, campo.campo);
+      this.obterTipoCampo(ctx, baseDadosId, campo.campo);
       const field = this.toJsonPath(campo.campo);
       const outputAlias = this.toOutputAlias(campo.rotulo);
 
@@ -209,45 +243,45 @@ export class ViewQueryBuilderService {
     });
   }
 
-  private buildFromClause(query: QueryView, ctx: QueryContext): string {
-    const rootAlias = this.getAlias(ctx, query.from.baseDadosId);
+  // FROM
 
-    return `FROM "clientes" ${rootAlias}`;
+  private construirFrom(query: QueryView, ctx: QueryContext): string {
+    const alias = this.obterAlias(ctx, query.from.baseDadosId, 0);
+
+    return `FROM "clientes" ${alias}`;
   }
 
-  private buildJoinClauses(query: QueryView, ctx: QueryContext): string {
-    if (!query.joins || query.joins.length === 0) {
-      return '';
-    }
+  // JOIN
+
+  private construirJoins(query: QueryView, ctx: QueryContext): string {
+    if (!query.joins || query.joins.length === 0) return '';
 
     return query.joins
-      .map((join) => this.buildJoinClause(query.from.baseDadosId, join, ctx))
+      .map((join, index) => this.construirJoin(join, index + 1, ctx))
       .join(' ');
   }
 
-  private buildJoinClause(
-    rootBaseDadosId: number,
+  private construirJoin(
     join: Join,
+    joinIndex: number,
     ctx: QueryContext,
   ): string {
-    const joinTipo = join.tipo;
-
-    if (joinTipo !== TIPO_JOIN.INNER) {
+    if (join.tipo !== TIPO_JOIN.INNER) {
       throw new BadRequestException(
-        `Tipo de join nao suportado: ${String(joinTipo)}`,
+        `Tipo de join nao suportado: ${String(join.tipo)}`,
       );
     }
 
-    const runtimeJoin = join as RuntimeJoin;
-    const fromBaseDadosId = runtimeJoin.fromBaseDadosId ?? rootBaseDadosId;
-    const fromAlias = this.getAlias(ctx, fromBaseDadosId);
-    const joinAlias = this.getAlias(ctx, join.baseDadosIdJoin);
-    const baseDadosParam = this.addParam(ctx, join.baseDadosIdJoin);
+    const fromJoinIndex = join.fromJoinIndex ?? 0;
+    const fromBaseDadosId = this.resolverBaseDadosId(ctx, fromJoinIndex);
+    const fromAlias = this.obterAlias(ctx, fromBaseDadosId, fromJoinIndex);
+    const joinAlias = this.obterAlias(ctx, join.baseDadosIdJoin, joinIndex);
+    const baseDadosParam = this.adicionarParam(ctx, join.baseDadosIdJoin);
     const campoFrom = this.toJsonPath(join.campoFrom);
     const campoJoin = this.toJsonPath(join.campoJoin);
 
-    this.getFieldType(ctx, fromBaseDadosId, join.campoFrom);
-    this.getFieldType(ctx, join.baseDadosIdJoin, join.campoJoin);
+    this.obterTipoCampo(ctx, fromBaseDadosId, join.campoFrom);
+    this.obterTipoCampo(ctx, join.baseDadosIdJoin, join.campoJoin);
 
     return [
       `INNER JOIN "clientes" ${joinAlias}`,
@@ -257,24 +291,24 @@ export class ViewQueryBuilderService {
     ].join(' ');
   }
 
-  private buildWhereClause(query: QueryView, ctx: QueryContext): string {
-    const rootAlias = this.getAlias(ctx, query.from.baseDadosId);
-    const rootBaseDadosParam = this.addParam(ctx, query.from.baseDadosId);
-    const predicates = [
-      `${rootAlias}."baseDeDadosId" = ${rootBaseDadosParam}`,
+  // WHERE
+
+  private construirWhere(query: QueryView, ctx: QueryContext): string {
+    const rootAlias = this.obterAlias(ctx, query.from.baseDadosId, 0);
+    const rootParam = this.adicionarParam(ctx, query.from.baseDadosId);
+    const predicados = [
+      `${rootAlias}."baseDeDadosId" = ${rootParam}`,
       `${rootAlias}."deletedAt" IS NULL`,
     ];
 
-    if (!query.groupFilter) {
-      return `WHERE ${predicates.join(' AND ')}`;
+    if (query.groupFilter) {
+      predicados.push(this.construirGruposFiltroRaiz(query.groupFilter, ctx));
     }
 
-    predicates.push(this.buildTopLevelGroupFilters(query.groupFilter, ctx));
-
-    return `WHERE ${predicates.join(' AND ')}`;
+    return `WHERE ${predicados.join(' AND ')}`;
   }
 
-  private buildTopLevelGroupFilters(
+  private construirGruposFiltroRaiz(
     groupFilters: GroupFilter[],
     ctx: QueryContext,
   ): string {
@@ -282,14 +316,14 @@ export class ViewQueryBuilderService {
       throw new BadRequestException('Lista de filtros nao pode ser vazia');
     }
 
-    const filters = groupFilters.map((groupFilter) =>
-      this.buildGroupFilter(groupFilter, ctx, 1),
+    const filtros = groupFilters.map((gf) =>
+      this.construirGrupoFiltro(gf, ctx, 1),
     );
 
-    return `(${filters.join(' AND ')})`;
+    return `(${filtros.join(' AND ')})`;
   }
 
-  private buildGroupFilter(
+  private construirGrupoFiltro(
     groupFilter: GroupFilter,
     ctx: QueryContext,
     depth: number,
@@ -301,107 +335,101 @@ export class ViewQueryBuilderService {
     }
 
     if (groupFilter.type === TIPO_FILTRO.FILTER) {
-      return this.buildFilter(groupFilter.filter, ctx);
+      return this.construirFiltro(groupFilter.filter, ctx);
     }
 
     if (groupFilter.groupFilter.length === 0) {
       throw new BadRequestException('Grupo de filtros nao pode ser vazio');
     }
 
-    const operator = this.toSqlWhereOperator(groupFilter.operadorWhere);
-    const children = groupFilter.groupFilter.map((child) =>
-      this.buildGroupFilter(child, ctx, depth + 1),
+    const operador = this.toSqlWhereOperador(groupFilter.operadorWhere);
+    const filhos = groupFilter.groupFilter.map((child) =>
+      this.construirGrupoFiltro(child, ctx, depth + 1),
     );
 
-    return `(${children.join(` ${operator} `)})`;
+    return `(${filhos.join(` ${operador} `)})`;
   }
 
-  private buildFilter(filter: Filter, ctx: QueryContext): string {
-    const alias = this.getAlias(ctx, filter.baseDadosId);
-    const fieldType = this.getFieldType(ctx, filter.baseDadosId, filter.campo);
-    const expression = this.buildTypedExpression(
+  private construirFiltro(filter: Filter, ctx: QueryContext): string {
+    const baseDadosId = this.resolverBaseDadosId(ctx, filter.joinIndex);
+    const alias = this.obterAlias(ctx, baseDadosId, filter.joinIndex);
+    const tipoCampo = this.obterTipoCampo(ctx, baseDadosId, filter.campo);
+    const expressao = this.construirExpressaoTipada(
       alias,
       filter.campo,
-      fieldType,
+      tipoCampo,
     );
-    const textExpression = this.buildTextExpression(alias, filter.campo);
-    const operator = filter.operador;
+    const expressaoTexto = this.construirExpressaoTexto(alias, filter.campo);
 
-    switch (operator) {
+    switch (filter.operador) {
       case OPERADOR.EQUAL:
-        return `${expression} = ${this.addParam(ctx, filter.valor)}`;
+        return `${expressao} = ${this.adicionarParam(ctx, filter.valor)}`;
       case OPERADOR.DIFFERENT:
-        return `${expression} <> ${this.addParam(ctx, filter.valor)}`;
+        return `${expressao} <> ${this.adicionarParam(ctx, filter.valor)}`;
       case OPERADOR.GREATER:
-        return `${expression} > ${this.addParam(ctx, filter.valor)}`;
+        return `${expressao} > ${this.adicionarParam(ctx, filter.valor)}`;
       case OPERADOR.LESS:
-        return `${expression} < ${this.addParam(ctx, filter.valor)}`;
+        return `${expressao} < ${this.adicionarParam(ctx, filter.valor)}`;
       case OPERADOR.GREATER_EQUAL:
-        return `${expression} >= ${this.addParam(ctx, filter.valor)}`;
+        return `${expressao} >= ${this.adicionarParam(ctx, filter.valor)}`;
       case OPERADOR.LESS_EQUAL:
-        return `${expression} <= ${this.addParam(ctx, filter.valor)}`;
+        return `${expressao} <= ${this.adicionarParam(ctx, filter.valor)}`;
       case OPERADOR.CONTAINS:
-        return `${textExpression} ILIKE ${this.addParam(ctx, `%${filter.valor}%`)}`;
+        return `${expressaoTexto} ILIKE ${this.adicionarParam(ctx, `%${filter.valor}%`)}`;
       case OPERADOR.START_WITH:
-        return `${textExpression} ILIKE ${this.addParam(ctx, `${filter.valor}%`)}`;
+        return `${expressaoTexto} ILIKE ${this.adicionarParam(ctx, `${filter.valor}%`)}`;
       case OPERADOR.IS_NULL:
-        return `${textExpression} IS NULL`;
+        return `${expressaoTexto} IS NULL`;
       case OPERADOR.IS_NOT_NULL:
-        return `${textExpression} IS NOT NULL`;
+        return `${expressaoTexto} IS NOT NULL`;
       default:
         throw new BadRequestException(
-          `Operador de filtro nao suportado: ${operator}`,
+          `Operador de filtro nao suportado: ${filter.operador}`,
         );
     }
   }
 
-  private buildTypedExpression(
-    alias: string,
-    fieldName: string,
-    fieldType: TipoCampo,
-  ): string {
-    const rawExpression = this.buildTextExpression(alias, fieldName);
+  // Sql
 
-    switch (fieldType) {
+  private construirExpressaoTipada(
+    alias: string,
+    nomeCampo: string,
+    tipoCampo: TipoCampo,
+  ): string {
+    const raw = this.construirExpressaoTexto(alias, nomeCampo);
+
+    switch (tipoCampo) {
       case TipoCampo.NUMERO:
-        return `NULLIF(${rawExpression}, '')::numeric`;
+        return `NULLIF(${raw}, '')::numeric`;
       case TipoCampo.BOOLEANO:
-        return `NULLIF(${rawExpression}, '')::boolean`;
+        return `NULLIF(${raw}, '')::boolean`;
       case TipoCampo.UTC:
+        return `NULLIF(${raw}, '')::timestamptz`;
       case TipoCampo.MM_DD_YYYY:
+        return `TO_TIMESTAMP(NULLIF(${raw}, ''), 'MM/DD/YYYY')`;
       case TipoCampo.DD_MM_YYYY:
-        return `NULLIF(${rawExpression}, '')::timestamptz`;
+        return `TO_TIMESTAMP(NULLIF(${raw}, ''), 'DD/MM/YYYY')`;
+      case TipoCampo.YYYY_MM_DD:
+        return `TO_TIMESTAMP(NULLIF(${raw}, ''), 'YYYY-MM-DD')`;
       case TipoCampo.TEXTO:
       case TipoCampo.EMAIL:
       case TipoCampo.TELEFONE:
-        return rawExpression;
+        return raw;
     }
   }
 
-  private buildTextExpression(alias: string, fieldName: string): string {
-    const field = this.toJsonPath(fieldName);
-
-    return `${alias}."dados" ->> '${field}'`;
+  private construirExpressaoTexto(alias: string, nomeCampo: string): string {
+    return `${alias}."dados" ->> '${this.toJsonPath(nomeCampo)}'`;
   }
 
-  private getAlias(ctx: QueryContext, baseDadosId: number): string {
-    const alias = ctx.aliasesByBaseDadosId.get(baseDadosId);
+  // Helpers
 
-    if (!alias) {
-      throw new BadRequestException(
-        `Base de dados ${baseDadosId} nao foi declarada na view`,
-      );
-    }
-
-    return alias;
-  }
-
-  private getFieldType(
+  private obterTipoCampo(
     ctx: QueryContext,
     baseDadosId: number,
-    fieldName: string,
+    nomeCampo: string,
   ): TipoCampo {
-    this.assertSafeFieldName(fieldName);
+    this.assertNomeCampoSeguro(nomeCampo);
 
     const estrutura = ctx.estruturasByBaseDadosId.get(baseDadosId);
 
@@ -411,36 +439,36 @@ export class ViewQueryBuilderService {
       );
     }
 
-    const fieldType = estrutura.get(fieldName);
+    const tipo = estrutura.get(nomeCampo);
 
-    if (!fieldType) {
+    if (!tipo) {
       throw new BadRequestException(
-        `Campo "${fieldName}" nao existe na base de dados ${baseDadosId}`,
+        `Campo "${nomeCampo}" nao existe na base de dados ${baseDadosId}`,
       );
     }
 
-    return fieldType;
+    return tipo;
   }
 
-  private assertSafeFieldName(fieldName: string): void {
-    if (!FIELD_NAME_PATTERN.test(fieldName)) {
+  private assertNomeCampoSeguro(nomeCampo: string): void {
+    if (!FIELD_NAME_PATTERN.test(nomeCampo)) {
       throw new BadRequestException(
-        `Campo "${fieldName}" possui caracteres invalidos`,
+        `Campo "${nomeCampo}" possui caracteres invalidos`,
       );
     }
   }
 
-  private toJsonPath(fieldName: string): string {
-    this.assertSafeFieldName(fieldName);
-    return fieldName;
+  private toJsonPath(nomeCampo: string): string {
+    this.assertNomeCampoSeguro(nomeCampo);
+    return nomeCampo;
   }
 
   private toOutputAlias(rotulo: string): string {
-    this.assertSafeFieldName(rotulo);
-    return `${rotulo}`;
+    this.assertNomeCampoSeguro(rotulo);
+    return rotulo;
   }
 
-  private toSqlWhereOperator(operadorWhere: OPERADOR_WHERE): string {
+  private toSqlWhereOperador(operadorWhere: OPERADOR_WHERE): string {
     switch (operadorWhere) {
       case OPERADOR_WHERE.AND:
         return 'AND';
@@ -449,7 +477,7 @@ export class ViewQueryBuilderService {
     }
   }
 
-  private addParam(ctx: QueryContext, value: unknown): string {
+  private adicionarParam(ctx: QueryContext, value: unknown): string {
     ctx.params.push(value);
     return `$${ctx.params.length}`;
   }

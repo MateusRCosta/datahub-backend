@@ -7,7 +7,7 @@ import {
   HttpStatus,
   Param,
   ParseIntPipe,
-  Patch,
+  Put,
   Query,
 } from '@nestjs/common';
 import { Roles } from 'src/auth/decorators/permissoes';
@@ -31,7 +31,7 @@ export class ClientesController {
     return this.clientesService.retornaPorId(id);
   }
 
-  @Patch(':id')
+  @Put(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async atualiza(
     @Param('id', ParseIntPipe) id: number,
