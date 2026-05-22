@@ -22,7 +22,7 @@ import { ViewUpdateDto } from './dto/view-update.dto';
 import { ViewService } from './view.service';
 
 @Controller('views')
-@Roles(Permissao.VISUALIZAR_RELATORIOS)
+@Roles(Permissao.GERENCIAR_VISUALIZACOES)
 export class ViewController {
   constructor(private readonly viewService: ViewService) {}
 

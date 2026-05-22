@@ -13,6 +13,7 @@ import {
 } from 'class-validator';
 import { IsFilterValue } from 'src/common/decorators/is-filter-value.decorator';
 import { OPERADOR, OPERADOR_WHERE, TIPO_JOIN } from '../types/view.types';
+import { MAX_JOINS } from '../constants';
 
 export class FromDto {
   @Type(() => Number)
@@ -49,7 +50,7 @@ export class SelectDto {
   readonly baseDadosId!: number;
 
   @Type(() => Number)
-  @Max(4)
+  @Max(MAX_JOINS - 1)
   readonly joinIndex!: number;
 
   @IsArray()
@@ -59,6 +60,10 @@ export class SelectDto {
 }
 
 export class FilterDto {
+  @Type(() => Number)
+  @IsInt()
+  readonly joinIndex!: number;
+
   @Type(() => Number)
   @IsInt()
   readonly baseDadosId!: number;

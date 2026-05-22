@@ -30,7 +30,7 @@ export class CampanhaCreateDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  readonly baseDeDadoId?: number;
+  readonly baseDadosId?: number;
 
   @IsString()
   @MaxLength(120)

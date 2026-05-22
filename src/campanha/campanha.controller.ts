@@ -25,7 +25,7 @@ import { CampanhaService } from './campanha.service';
 import { ClienteCampanhaService } from './cliente-campanha.service';
 
 @Controller('campanhas')
-@Roles(Permissao.EDITAR_CAMPANHAS)
+@Roles(Permissao.GERENCIAR_CAMPANHAS)
 export class CampanhaController {
   constructor(
     private readonly campanhaService: CampanhaService,

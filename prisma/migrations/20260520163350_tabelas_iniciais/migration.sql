@@ -149,7 +149,7 @@ CREATE TABLE "templates" (
 CREATE TABLE "campanhas" (
     "id" SERIAL NOT NULL,
     "nome" VARCHAR(100) NOT NULL,
-    "status" VARCHAR(25) NOT NULL DEFAULT 'naoEnviado',
+    "status" VARCHAR(25) NOT NULL DEFAULT 'pendente',
     "vars" JSONB NOT NULL,
     "contatoCampo" VARCHAR(120) NOT NULL,
     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,

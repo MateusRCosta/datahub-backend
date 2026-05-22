@@ -194,7 +194,7 @@ model Template {
 model Campanha {
   id           Int    @id @default(autoincrement()) @db.Integer
   nome         String @db.VarChar(100)
-  status       String @default("naoEnviado") @db.VarChar(25)
+  status       String @default("pendente") @db.VarChar(25)
   vars         Json   @db.JsonB
   contatoCampo String @db.VarChar(120)
 

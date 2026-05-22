@@ -67,7 +67,6 @@ export class IntegracaoCampanhaService {
           status: true,
           usuario: {
             select: {
-              id: true,
               nome: true,
             },
           },
@@ -101,7 +100,6 @@ export class IntegracaoCampanhaService {
           config: true,
           usuario: {
             select: {
-              id: true,
               nome: true,
             },
           },

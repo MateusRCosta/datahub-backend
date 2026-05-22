@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { EstruturaBaseDadosDto } from 'src/base-dados/dto/bases-dados-estrutura.dto';
+import { BaseDadosEstruturaDto } from 'src/base-dados/dto/base-dados-estrutura.dto';
 import { PaginatedResponse } from 'src/common/interfaces/paginated-response.interface';
 import {
   buildPrismaOrderBy,
@@ -15,7 +15,7 @@ import { QueryView, Select } from 'src/view/types/view.types';
 import {
   CAMPO_REFERENCIA_PREFIX,
   TRANSICOES_STATUS_CAMPANHA,
-} from './campanha.constants';
+} from './constants';
 import {
   campanhaFilterConfig,
   campanhaOrderByFields,
@@ -33,6 +33,7 @@ import { ClienteCampanhaService } from './cliente-campanha.service';
 import { TemplateService } from 'src/template/template.service';
 import { ViewService } from 'src/view/view.service';
 import { paginate } from 'src/common/utils/paginated-response';
+import { BaseDadosService } from 'src/base-dados/base-dados.service';
 
 @Injectable()
 export class CampanhaService {
@@ -41,6 +42,7 @@ export class CampanhaService {
     private readonly clienteCampanhaService: ClienteCampanhaService,
     private readonly templateService: TemplateService,
     private readonly viewService: ViewService,
+    private readonly baseDadosService: BaseDadosService,
   ) {}
 
   async retornaTodos(
@@ -179,12 +181,12 @@ export class CampanhaService {
     if (!(await this.templateService.existePorId(dto.templateId)))
       throw new BadRequestException('O template informado nao foi encontrado');
 
-    if (dto.baseDeDadoId && dto.viewId)
+    if (dto.baseDadosId && dto.viewId)
       throw new BadRequestException('Informe ou uma base ou uma view');
 
     await this.validaFonteECampos(
       dto.viewId,
-      dto.baseDeDadoId,
+      dto.baseDadosId,
       dto.contatoCampo,
       dto.vars,
     );
@@ -195,7 +197,8 @@ export class CampanhaService {
         scheduledAt: dto.scheduledAt,
         templateId: dto.templateId,
         viewId: dto.viewId,
-        baseDeDadoId: dto.baseDeDadoId,
+        status: STATUS_CAMPANHA.PENDENTE,
+        baseDeDadoId: dto.baseDadosId,
         contatoCampo: dto.contatoCampo,
         vars: dto.vars as unknown as Prisma.InputJsonValue,
         usuarioId,
@@ -210,7 +213,7 @@ export class CampanhaService {
       dto.scheduledAt === undefined &&
       dto.templateId === undefined &&
       dto.viewId === undefined &&
-      dto.baseDeDadoId === undefined &&
+      dto.baseDadosId === undefined &&
       dto.contatoCampo === undefined &&
       dto.vars === undefined
     ) {
@@ -249,8 +252,8 @@ export class CampanhaService {
     const templateId = dto.templateId ?? campanhaAtual.templateId;
     const viewId = dto.viewId !== undefined ? dto.viewId : campanhaAtual.viewId;
     const baseDeDadoId =
-      dto.baseDeDadoId !== undefined
-        ? dto.baseDeDadoId
+      dto.baseDadosId !== undefined
+        ? dto.baseDadosId
         : campanhaAtual.baseDeDadoId;
     const contatoCampo = dto.contatoCampo ?? String(campanhaAtual.contatoCampo);
     const vars = dto.vars ?? this.toCampanhaVars(campanhaAtual.vars);
@@ -261,7 +264,7 @@ export class CampanhaService {
     if (!(await this.templateService.existePorId(templateId)))
       throw new BadRequestException('O template informado nao foi encontrado');
 
-    if (dto.baseDeDadoId && dto.viewId)
+    if (dto.baseDadosId && dto.viewId)
       throw new BadRequestException('Informe ou uma base ou uma view');
 
     await this.validaFonteECampos(viewId, baseDeDadoId, contatoCampo, vars);
@@ -385,18 +388,22 @@ export class CampanhaService {
   }
 
   private async buscaCamposBase(baseDeDadoId: number): Promise<Set<string>> {
-    const base = await this.prismaService.baseDeDados.findFirst({
-      where: { id: baseDeDadoId, deletedAt: null },
-      select: { estrutura: true },
-    });
+    const base =
+      await this.baseDadosService.retornaEstruturaPorId(baseDeDadoId);
 
     if (!base) {
       throw new NotFoundException('Base de dados nao encontrada');
     }
 
-    return new Set(
-      this.toEstrutura(base.estrutura).map((item) => item.cabecalho),
-    );
+    const estruturaTipada: BaseDadosEstruturaDto[] = [];
+    if (Array.isArray(base.estrutura)) {
+      estruturaTipada.push(
+        ...(base.estrutura as unknown as BaseDadosEstruturaDto[]),
+      );
+      return new Set(estruturaTipada.map((item) => item.cabecalho));
+    }
+
+    return new Set();
   }
 
   private validaScheduledAt(scheduledAt: Date): void {
@@ -468,7 +475,7 @@ export class CampanhaService {
       return null;
     }
 
-    return `b${select.baseDadosId}_${campo.rotulo}`;
+    return `b${select.joinIndex}_${campo.rotulo}`;
   }
 
   private getReferencia(value: string): string {
@@ -491,13 +498,5 @@ export class CampanhaService {
     return Object.values(value as Record<string, unknown>).every(
       (item) => typeof item === 'string',
     );
-  }
-
-  private toEstrutura(value: Prisma.JsonValue): EstruturaBaseDadosDto[] {
-    if (!Array.isArray(value)) {
-      return [];
-    }
-
-    return value as unknown as EstruturaBaseDadosDto[];
   }
 }

@@ -17,7 +17,7 @@ import { ClienteFindAllQueryDto } from './dto/cliente-find-all-query.dto';
 import { ClienteUpdateDto } from './dto/cliente-update.dto';
 
 @Controller('clientes')
-@Roles(Permissao.EDITAR_BASE_DADOS)
+@Roles(Permissao.GERENCIAR_BASE_DADOS)
 export class ClientesController {
   constructor(private readonly clientesService: ClientesService) {}
 

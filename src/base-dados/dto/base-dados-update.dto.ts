@@ -6,9 +6,9 @@ import {
   MaxLength,
   ValidateNested,
 } from 'class-validator';
-import { EstruturaBaseDadosDto } from './bases-dados-estrutura.dto';
+import { BaseDadosEstruturaDto } from './base-dados-estrutura.dto';
 
-export class BasesDadosUpdateDto {
+export class BaseDadosUpdateDto {
   @IsOptional()
   @MaxLength(120)
   @IsString()
@@ -17,6 +17,6 @@ export class BasesDadosUpdateDto {
   @IsOptional()
   @IsArray()
   @ValidateNested({ each: true })
-  @Type(() => EstruturaBaseDadosDto)
-  estrutura?: EstruturaBaseDadosDto[];
+  @Type(() => BaseDadosEstruturaDto)
+  estrutura?: BaseDadosEstruturaDto[];
 }

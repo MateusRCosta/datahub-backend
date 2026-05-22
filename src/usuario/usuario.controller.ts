@@ -52,7 +52,7 @@ export class UsuariosController {
     return;
   }
 
-  @Patch(':id/ativo')
+  @Patch(':id/status')
   @HttpCode(HttpStatus.NO_CONTENT)
   async atualizaStatus(
     @Param('id', ParseIntPipe) id: number,

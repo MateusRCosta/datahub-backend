@@ -4,7 +4,7 @@ import { ScheduleModule } from '@nestjs/schedule';
 import { AuthModule } from './auth/auth.module';
 import configuration from './config/configuration';
 import { UsuariosModule } from './usuario/usuario.module';
-import { BasesDadosModule } from './base-dados/base-dados.module';
+import { BaseDadosModule } from './base-dados/base-dados.module';
 import { ClientesModule } from './cliente/cliente.module';
 import { IntegracaoModule } from './integracao/integracao.module';
 import { IntegracaoCampanhaModule } from './integracao-campanha/integracao-campanha.module';
@@ -18,7 +18,7 @@ import { CampanhaModule } from './campanha/campanha.module';
     ScheduleModule.forRoot(),
     AuthModule,
     UsuariosModule,
-    BasesDadosModule,
+    BaseDadosModule,
     ClientesModule,
     IntegracaoModule,
     IntegracaoCampanhaModule,

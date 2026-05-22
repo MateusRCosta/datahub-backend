@@ -30,10 +30,10 @@ export async function seedAdmin(prisma: PrismaClient) {
       ativo: true,
       deletedAt: null,
       permissoes: [
-        Permissao.EDITAR_BASE_DADOS,
-        Permissao.VISUALIZAR_RELATORIOS,
-        Permissao.EDITAR_CAMPANHAS,
-        Permissao.EDITAR_INTEGRACOES,
+        Permissao.GERENCIAR_BASE_DADOS,
+        Permissao.GERENCIAR_VISUALIZACOES,
+        Permissao.GERENCIAR_CAMPANHAS,
+        Permissao.GERENCIAR_INTEGRACOES,
       ],
     },
     create: {
@@ -43,10 +43,10 @@ export async function seedAdmin(prisma: PrismaClient) {
       admin: true,
       ativo: true,
       permissoes: [
-        Permissao.EDITAR_BASE_DADOS,
-        Permissao.VISUALIZAR_RELATORIOS,
-        Permissao.EDITAR_CAMPANHAS,
-        Permissao.EDITAR_INTEGRACOES,
+        Permissao.GERENCIAR_BASE_DADOS,
+        Permissao.GERENCIAR_VISUALIZACOES,
+        Permissao.GERENCIAR_CAMPANHAS,
+        Permissao.GERENCIAR_INTEGRACOES,
       ],
     },
   });

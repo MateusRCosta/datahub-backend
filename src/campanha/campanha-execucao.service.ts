@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { EstruturaBaseDadosDto } from 'src/base-dados/dto/bases-dados-estrutura.dto';
+import { BaseDadosEstruturaDto } from 'src/base-dados/dto/base-dados-estrutura.dto';
 import { ClientesService } from 'src/cliente/cliente.service';
 import { PrismaService } from 'src/config/prisma.service';
 import { IntegracaoCampanhaService } from 'src/integracao-campanha/integracao-campanha.service';
@@ -15,7 +15,7 @@ import { ViewService } from 'src/view/view.service';
 import {
   CAMPO_REFERENCIA_PREFIX,
   POPULA_CLIENTES_CAMPANHA_BATCH_SIZE,
-} from './campanha.constants';
+} from './constants';
 import { ClienteCampanhaService } from './cliente-campanha.service';
 import {
   CampanhaExecucao,
@@ -31,7 +31,7 @@ import { ViewRowCampanha } from './types/campanha-job.type';
 import { Mensagem } from 'src/integracao-campanha/types/execucao.type';
 
 @Injectable()
-export class CampanhaJobService {
+export class CampanhaExecucaoService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly integracaoCampanhaService: IntegracaoCampanhaService,
@@ -126,15 +126,9 @@ export class CampanhaJobService {
               this.assertViewQuery(viewQuery),
               viewRows.get(pendente.clienteId),
             );
-      const telefone = this.resolveReferencia(campanha.contatoCampo, accessor);
-
-      if (!telefone) {
-        clienteCampanhaComErro.push(pendente.id);
-        continue;
-      }
 
       mensagens.push({
-        meio: telefone,
+        meio: this.toStringOrEmpty(accessor(campanha.contatoCampo)),
         parametros: this.resolveParametros(vars, accessor),
       });
       clienteCampanhaIds.push(pendente.id);
@@ -556,12 +550,12 @@ export class CampanhaJobService {
     );
   }
 
-  private toEstrutura(value: Prisma.JsonValue): EstruturaBaseDadosDto[] {
+  private toEstrutura(value: Prisma.JsonValue): BaseDadosEstruturaDto[] {
     if (!Array.isArray(value)) {
       return [];
     }
 
-    return value as unknown as EstruturaBaseDadosDto[];
+    return value as unknown as BaseDadosEstruturaDto[];
   }
 
   private toRecord(value: unknown): Record<string, unknown> {

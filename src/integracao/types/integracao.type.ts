@@ -50,3 +50,11 @@ export enum STATUS_JOB {
   COMPLETO = 'COMPLETO',
   ERRO = 'ERRO',
 }
+
+export enum METODO {
+  GET = 'GET',
+  POST = 'POST',
+  PUT = 'PUT',
+  DELETE = 'DELETE',
+  PATCH = 'PATCH',
+}

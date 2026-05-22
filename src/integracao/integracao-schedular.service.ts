@@ -5,7 +5,7 @@ import {
   IntegracaoAgendamento,
   JobIntegracaoReservado,
   STATUS_JOB,
-} from './types/integracoes-execucao.type';
+} from './types/integracao.type';
 import { Job } from '@prisma/client';
 import { PrismaService } from 'src/config/prisma.service';
 

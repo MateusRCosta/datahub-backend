@@ -17,7 +17,7 @@ import {
   clientesOrderByFields,
 } from './cliente.filter-config';
 import { ClientesCriacaoService } from './cliente-criacao.service';
-import { EstruturaBaseDadosDto } from 'src/base-dados/dto/bases-dados-estrutura.dto';
+import { BaseDadosEstruturaDto } from 'src/base-dados/dto/base-dados-estrutura.dto';
 import { normalizaDadosCliente } from './utils/dados-normalizer';
 import { paginate } from 'src/common/utils/paginated-response';
 
@@ -31,7 +31,7 @@ export class ClientesService {
   async criaOuAtualizaClientesDaBase(
     prisma: Prisma.TransactionClient | PrismaClient,
     baseDeDadosId: number,
-    estrutura: EstruturaBaseDadosDto[],
+    estrutura: BaseDadosEstruturaDto[],
     linhas: Array<Record<string, unknown>>,
     identificadores: string[] = [],
   ) {
@@ -47,7 +47,7 @@ export class ClientesService {
   async criaClientesDaBase(
     prisma: Prisma.TransactionClient | PrismaClient,
     baseDeDadosId: number,
-    estrutura: EstruturaBaseDadosDto[],
+    estrutura: BaseDadosEstruturaDto[],
     linhas: Array<Record<string, unknown>>,
   ) {
     return this.clientesCriacaoService.criaClientesDaBase(
@@ -61,21 +61,13 @@ export class ClientesService {
   async revalidaClientesDaBase(
     prisma: Prisma.TransactionClient,
     baseDeDadosId: number,
-    estrutura: EstruturaBaseDadosDto[],
+    estrutura: BaseDadosEstruturaDto[],
   ) {
     return this.clientesCriacaoService.revalidaClientesDaBase(
       prisma,
       baseDeDadosId,
       estrutura,
     );
-  }
-
-  private revalidaCliente(
-    dados: Record<string, unknown>,
-    estrutura: EstruturaBaseDadosDto[],
-  ) {
-    const { validacao } = normalizaDadosCliente(dados, estrutura);
-    return validacao;
   }
 
   async retornaTodos(query: ClienteFindAllQueryDto) {
@@ -183,13 +175,20 @@ export class ClientesService {
         updatedAt: new Date(),
       };
 
-      const validacao = this.revalidaCliente(
+      const { dados, validacao } = normalizaDadosCliente(
         dto.dados,
-        cliente.baseDeDados.estrutura as unknown as EstruturaBaseDadosDto[],
+        cliente.baseDeDados.estrutura as unknown as BaseDadosEstruturaDto[],
       );
 
-      data.dados = dto.dados as Prisma.InputJsonValue;
-      data.hash = this.clientesCriacaoService.geraHash(dto.dados);
+      if (validacao.length > 0) {
+        throw new BadRequestException({
+          message: 'Dados do cliente invalidos',
+          validacao,
+        });
+      }
+
+      data.dados = dados as Prisma.InputJsonValue;
+      data.hash = this.clientesCriacaoService.geraHash(dados);
       data.validacao = validacao as Prisma.InputJsonValue;
 
       try {

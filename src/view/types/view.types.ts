@@ -40,7 +40,6 @@ export type From = {
 };
 
 export type Join = {
-  joinIndex: number; // 1-based
   fromJoinIndex?: number;
   baseDadosIdJoin: number;
   campoFrom: string;
@@ -50,7 +49,6 @@ export type Join = {
 
 export type Select = {
   joinIndex: number; // 0 = root FROM, 1+ = join
-  baseDadosId: number;
   campos: {
     campo: string;
     rotulo: string;
@@ -59,7 +57,6 @@ export type Select = {
 
 export type Filter = {
   joinIndex: number; // 0 = root FROM, 1+ = join
-  baseDadosId: number;
   campo: string;
   operador: OPERADOR;
   valor: string | number | boolean;

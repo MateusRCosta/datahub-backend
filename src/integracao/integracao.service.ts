@@ -21,7 +21,7 @@ import {
 import { IntegracaoCreateDto } from './dto/integracao-create-dto';
 import { IntegracaoFindAllQueryDto } from './dto/integracao-find-all-query.dto';
 import { IntegracaoUpdateDto } from './dto/integracao-update-dto';
-import { STATUS_JOB } from './types/integracoes-execucao.type';
+import { STATUS_JOB } from './types/integracao.type';
 import { IntegracaoSchedularService } from './integracao-schedular.service';
 import { paginate } from 'src/common/utils/paginated-response';
 

@@ -20,7 +20,7 @@ import { Roles } from '../auth/decorators/permissoes';
 import { IntegracaoFindAllQueryDto } from './dto/integracao-find-all-query.dto';
 
 @Controller('integracoes')
-@Roles(Permissao.EDITAR_INTEGRACOES)
+@Roles(Permissao.GERENCIAR_INTEGRACOES)
 export class IntegracaoController {
   constructor(private integracaoService: IntegracaoService) {}
 

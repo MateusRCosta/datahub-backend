@@ -21,7 +21,7 @@ import { Permissao } from 'src/usuario/interfaces/permissao';
 import { Roles } from 'src/auth/decorators/permissoes';
 
 @Controller('templates')
-@Roles(Permissao.EDITAR_CAMPANHAS)
+@Roles(Permissao.GERENCIAR_CAMPANHAS)
 export class TemplateController {
   constructor(private readonly templateService: TemplateService) {}
 

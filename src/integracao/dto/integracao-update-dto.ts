@@ -11,9 +11,9 @@ import {
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { IntegracaoResponseDto } from './integracao-response-dto';
-import { METODO } from '../utils/type';
 import { IntegracaoHeaderDto } from './integracao-header-dto';
 import { IntegracaoVariavelDto } from './integracao-variavel-dto';
+import { METODO } from '../types/integracao.type';
 
 export class IntegracaoUpdateDto {
   @MaxLength(100)

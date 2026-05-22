@@ -5,23 +5,23 @@ import {
 } from '@nestjs/common';
 import { CsvParser } from 'nest-csv-parser';
 import { PrismaService } from '../config/prisma.service';
-import { BasesDadosFindAllQueryDto } from './dto/bases-dados-find-all-query.dto';
 import { Prisma } from '@prisma/client';
 import {
   buildPrismaOrderBy,
   buildPrismaWhere,
 } from '../common/utils/prisma-filter-parser';
 import {
-  basesDadosFilterConfig,
-  basesDadosOrderByFields,
+  baseDadosFilterConfig,
+  baseDadosOrderByFields,
 } from './base-dados.filter-config';
-import { BasesDadosCreateDto } from './dto/bases-dados-create.dto';
-import { BasesDadosUpdateDto } from './dto/bases-dados-update.dto';
+import { BaseDadosCreateDto } from './dto/base-dados-create.dto';
+import { BaseDadosUpdateDto } from './dto/base-dados-update.dto';
 import { Readable } from 'stream';
 import { ClientesService } from 'src/cliente/cliente.service';
 import { IntegracaoResponseDto } from 'src/integracao/dto/integracao-response-dto';
-import { EstruturaBaseDadosDto } from './dto/bases-dados-estrutura.dto';
+import { BaseDadosEstruturaDto } from './dto/base-dados-estrutura.dto';
 import { paginate } from 'src/common/utils/paginated-response';
+import { BaseDadosFindAllQueryDto } from './dto/base-dados-find-all-query.dto';
 
 type ResultadoPersistenciaClientes = {
   criados: number;
@@ -29,14 +29,14 @@ type ResultadoPersistenciaClientes = {
 };
 
 @Injectable()
-export class BasesDadosService {
+export class BaseDadosService {
   constructor(
     private readonly prismaService: PrismaService,
     private readonly csvParser: CsvParser,
     private readonly clientesService: ClientesService,
   ) {}
 
-  async retornaTodos(query: BasesDadosFindAllQueryDto) {
+  async retornaTodos(query: BaseDadosFindAllQueryDto) {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
@@ -48,14 +48,14 @@ export class BasesDadosService {
         usuarioId: query.usuarioId,
         integracaoId: query.integracaoId,
       },
-      basesDadosFilterConfig,
+      baseDadosFilterConfig,
       { deletedAt: null },
     );
 
     const orderBy = buildPrismaOrderBy(
       query.orderBy,
       query.order,
-      basesDadosOrderByFields,
+      baseDadosOrderByFields,
       'createdAt',
     );
 
@@ -189,7 +189,7 @@ export class BasesDadosService {
   async salvaClientesDaBase(
     prisma: Prisma.TransactionClient,
     baseDeDadosId: number,
-    estrutura: EstruturaBaseDadosDto[],
+    estrutura: BaseDadosEstruturaDto[],
     linhas: Array<Record<string, unknown>>,
     identificadores: string[] = [],
   ): Promise<ResultadoPersistenciaClientes> {
@@ -202,7 +202,7 @@ export class BasesDadosService {
     );
   }
 
-  async cria(dto: BasesDadosCreateDto, csvBuffer: Buffer, usuarioId?: number) {
+  async cria(dto: BaseDadosCreateDto, csvBuffer: Buffer, usuarioId?: number) {
     const csvStream = Readable.from(csvBuffer);
     const separator = this.detectCsvSeparator(csvBuffer);
 
@@ -254,7 +254,7 @@ export class BasesDadosService {
     };
   }
 
-  async atualiza(id: number, dto: BasesDadosUpdateDto) {
+  async atualiza(id: number, dto: BaseDadosUpdateDto) {
     if (dto.nome === undefined && dto.estrutura === undefined) {
       throw new BadRequestException(
         'Informe ao menos um campo para atualizar: nome ou estrutura',
@@ -347,6 +347,20 @@ export class BasesDadosService {
     });
   }
 
+  async retornaEstruturaPorId(id: number) {
+    return await this.prismaService.baseDeDados.findFirst({
+      where: { id, deletedAt: null },
+      select: { id: true, estrutura: true },
+    });
+  }
+
+  async retornaEstruturasPorIds(ids: number[]) {
+    return await this.prismaService.baseDeDados.findMany({
+      where: { id: { in: ids }, deletedAt: null },
+      select: { id: true, estrutura: true },
+    });
+  }
+
   private detectCsvSeparator(csvBuffer: Buffer) {
     const firstLine = csvBuffer.toString('utf-8').split(/\r?\n/, 1)[0]?.trim();
 
@@ -369,17 +383,17 @@ export class BasesDadosService {
     return typeof value === 'string' ? (JSON.parse(value) as T) : (value as T);
   }
 
-  private toEstruturaArray(value: Prisma.JsonValue): EstruturaBaseDadosDto[] {
+  private toEstruturaArray(value: Prisma.JsonValue): BaseDadosEstruturaDto[] {
     if (!Array.isArray(value)) {
       return [];
     }
 
-    return value as unknown as EstruturaBaseDadosDto[];
+    return value as unknown as BaseDadosEstruturaDto[];
   }
 
   private montaEstruturaDaIntegracao(
     responseScrap: IntegracaoResponseDto[],
-  ): EstruturaBaseDadosDto[] {
+  ): BaseDadosEstruturaDto[] {
     return responseScrap.map((item) => ({
       cabecalho: item.nome,
       tipo: item.tipo,
@@ -389,8 +403,8 @@ export class BasesDadosService {
   }
 
   private mesclaEstruturas(
-    estruturaAtual: EstruturaBaseDadosDto[],
-    estruturaNova: EstruturaBaseDadosDto[],
+    estruturaAtual: BaseDadosEstruturaDto[],
+    estruturaNova: BaseDadosEstruturaDto[],
   ) {
     const existentes = new Map(
       estruturaAtual.map((item) => [item.cabecalho.trim(), item]),

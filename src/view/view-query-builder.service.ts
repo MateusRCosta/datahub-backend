@@ -1,5 +1,5 @@
 import { BadRequestException, Injectable } from '@nestjs/common';
-import { EstruturaBaseDadosDto } from 'src/base-dados/dto/bases-dados-estrutura.dto';
+import { BaseDadosEstruturaDto } from 'src/base-dados/dto/base-dados-estrutura.dto';
 import { TipoCampo } from 'src/base-dados/util/type';
 import { PrismaService } from 'src/config/prisma.service';
 import {
@@ -18,18 +18,18 @@ import {
   TIPO_FILTRO,
   TIPO_JOIN,
 } from './types/view.types';
-
-const MAX_JOINS = 4;
-const MAX_DEPTH = 3;
-const FIELD_NAME_PATTERN = /^[\p{L}\p{N}_\/\-" ]+$/u;
+import { BaseDadosService } from 'src/base-dados/base-dados.service';
+import { MAX_DEPTH, MAX_JOINS } from './constants';
 
 @Injectable()
 export class ViewQueryBuilderService {
-  constructor(private readonly prismaService: PrismaService) {}
+  constructor(
+    private readonly prismaService: PrismaService,
+    private readonly baseDadosService: BaseDadosService,
+  ) {}
 
   async build(query: QueryView): Promise<BuiltQuery> {
     this.validarLimites(query);
-
     const baseDadosIds = this.obterBaseDadosIds(query);
     const estruturasByBaseDadosId = await this.carregarEstruturas(baseDadosIds);
     const { aliasesByKey, joinIndexParaBaseDadosId } =
@@ -120,7 +120,6 @@ export class ViewQueryBuilderService {
 
     aliasesByKey.set(this.chaveAlias(query.from.baseDadosId, 0), 'c0');
     joinIndexParaBaseDadosId.set(0, query.from.baseDadosId);
-
     query.joins?.forEach((join, index) => {
       const joinIndex = index + 1;
       aliasesByKey.set(
@@ -179,10 +178,8 @@ export class ViewQueryBuilderService {
   private async carregarEstruturas(
     baseDadosIds: number[],
   ): Promise<Map<number, Map<string, TipoCampo>>> {
-    const bases = await this.prismaService.baseDeDados.findMany({
-      where: { id: { in: baseDadosIds }, deletedAt: null },
-      select: { id: true, estrutura: true },
-    });
+    const bases =
+      await this.baseDadosService.retornaEstruturasPorIds(baseDadosIds);
 
     if (bases.length !== baseDadosIds.length) {
       throw new BadRequestException(
@@ -204,16 +201,11 @@ export class ViewQueryBuilderService {
 
     const fields = new Map<string, TipoCampo>();
 
-    for (const item of base.estrutura as unknown as EstruturaBaseDadosDto[]) {
-      this.assertNomeCampoSeguro(item.cabecalho);
-      fields.set(item.cabecalho, this.normalizarTipoCampo(item.tipo));
+    for (const item of base.estrutura as unknown as BaseDadosEstruturaDto[]) {
+      fields.set(item.cabecalho, item.tipo ?? TipoCampo.TEXTO);
     }
 
     return fields;
-  }
-
-  private normalizarTipoCampo(tipo?: TipoCampo): TipoCampo {
-    return tipo ?? TipoCampo.TEXTO;
   }
 
   // SELECT
@@ -236,8 +228,8 @@ export class ViewQueryBuilderService {
 
     return select.campos.map((campo) => {
       this.obterTipoCampo(ctx, baseDadosId, campo.campo);
-      const field = this.toJsonPath(campo.campo);
-      const outputAlias = this.toOutputAlias(campo.rotulo);
+      const field = campo.campo;
+      const outputAlias = campo.rotulo;
 
       return `${alias}."dados" ->> '${field}' AS "${outputAlias}"`;
     });
@@ -277,8 +269,8 @@ export class ViewQueryBuilderService {
     const fromAlias = this.obterAlias(ctx, fromBaseDadosId, fromJoinIndex);
     const joinAlias = this.obterAlias(ctx, join.baseDadosIdJoin, joinIndex);
     const baseDadosParam = this.adicionarParam(ctx, join.baseDadosIdJoin);
-    const campoFrom = this.toJsonPath(join.campoFrom);
-    const campoJoin = this.toJsonPath(join.campoJoin);
+    const campoFrom = join.campoFrom;
+    const campoJoin = join.campoJoin;
 
     this.obterTipoCampo(ctx, fromBaseDadosId, join.campoFrom);
     this.obterTipoCampo(ctx, join.baseDadosIdJoin, join.campoJoin);
@@ -419,7 +411,7 @@ export class ViewQueryBuilderService {
   }
 
   private construirExpressaoTexto(alias: string, nomeCampo: string): string {
-    return `${alias}."dados" ->> '${this.toJsonPath(nomeCampo)}'`;
+    return `${alias}."dados" ->> '${nomeCampo}'`;
   }
 
   // Helpers
@@ -429,8 +421,6 @@ export class ViewQueryBuilderService {
     baseDadosId: number,
     nomeCampo: string,
   ): TipoCampo {
-    this.assertNomeCampoSeguro(nomeCampo);
-
     const estrutura = ctx.estruturasByBaseDadosId.get(baseDadosId);
 
     if (!estrutura) {
@@ -448,24 +438,6 @@ export class ViewQueryBuilderService {
     }
 
     return tipo;
-  }
-
-  private assertNomeCampoSeguro(nomeCampo: string): void {
-    if (!FIELD_NAME_PATTERN.test(nomeCampo)) {
-      throw new BadRequestException(
-        `Campo "${nomeCampo}" possui caracteres invalidos`,
-      );
-    }
-  }
-
-  private toJsonPath(nomeCampo: string): string {
-    this.assertNomeCampoSeguro(nomeCampo);
-    return nomeCampo;
-  }
-
-  private toOutputAlias(rotulo: string): string {
-    this.assertNomeCampoSeguro(rotulo);
-    return rotulo;
   }
 
   private toSqlWhereOperador(operadorWhere: OPERADOR_WHERE): string {

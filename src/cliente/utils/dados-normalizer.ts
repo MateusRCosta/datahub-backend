@@ -1,4 +1,4 @@
-import { EstruturaBaseDadosDto } from 'src/base-dados/dto/bases-dados-estrutura.dto';
+import { BaseDadosEstruturaDto } from 'src/base-dados/dto/base-dados-estrutura.dto';
 import { TipoCampo } from 'src/base-dados/util/type';
 import {
   DadosNormalizado,
@@ -233,7 +233,7 @@ function buscaValorPorCabecalho(
 
 export function normalizaDadosCliente(
   row: Record<string, unknown>,
-  estrutura: EstruturaBaseDadosDto[],
+  estrutura: BaseDadosEstruturaDto[],
 ): DadosNormalizado {
   const dados: Record<string, unknown> = {};
   const validacao: Validacao[] = [];

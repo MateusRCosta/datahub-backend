@@ -16,29 +16,29 @@ import {
 import type { FastifyRequest } from 'fastify';
 import { Roles } from '../auth/decorators/permissoes';
 import { Permissao } from '../usuario/interfaces/permissao';
-import { BasesDadosService } from './base-dados.service';
-import { BasesDadosFindAllQueryDto } from './dto/bases-dados-find-all-query.dto';
+import { BaseDadosService } from './base-dados.service';
+import { BaseDadosFindAllQueryDto } from './dto/base-dados-find-all-query.dto';
 import { plainToInstance } from 'class-transformer';
-import { BasesDadosCreateDto } from './dto/bases-dados-create.dto';
+import { BaseDadosCreateDto } from './dto/base-dados-create.dto';
 import { validateOrReject } from 'class-validator';
 import { isMultipartValue } from './util/isMultipartValue';
 import { MIMETYPES } from './util/constant';
-import { BasesDadosUpdateDto } from './dto/bases-dados-update.dto';
+import { BaseDadosUpdateDto } from './dto/base-dados-update.dto';
 import { RequestCookies } from 'src/auth/types/requestCookies';
 
 @Controller('bases-dados')
-@Roles(Permissao.EDITAR_BASE_DADOS)
-export class BasesDadosController {
-  constructor(private readonly basesDadosService: BasesDadosService) {}
+@Roles(Permissao.GERENCIAR_BASE_DADOS)
+export class BaseDadosController {
+  constructor(private readonly baseDadosService: BaseDadosService) {}
 
   @Get()
-  retornaTodos(@Query() query: BasesDadosFindAllQueryDto) {
-    return this.basesDadosService.retornaTodos(query);
+  retornaTodos(@Query() query: BaseDadosFindAllQueryDto) {
+    return this.baseDadosService.retornaTodos(query);
   }
 
   @Get(':id')
   retornaPorId(@Param('id', ParseIntPipe) id: number) {
-    return this.basesDadosService.retornaPorId(id);
+    return this.baseDadosService.retornaPorId(id);
   }
 
   @Post()
@@ -76,7 +76,7 @@ export class BasesDadosController {
       throw new BadRequestException('Estrutura inválida (JSON)');
     }
 
-    const dto = plainToInstance(BasesDadosCreateDto, {
+    const dto = plainToInstance(BaseDadosCreateDto, {
       nome,
       estrutura: parsedEstrutura,
     });
@@ -90,23 +90,23 @@ export class BasesDadosController {
       throw new BadRequestException(errors);
     }
 
-    return this.basesDadosService.cria(dto, buffer, req.user?.sub);
+    return this.baseDadosService.cria(dto, buffer, req.user?.sub);
   }
 
   @Put(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async atualiza(
     @Param('id', ParseIntPipe) id: number,
-    @Body() dto: BasesDadosUpdateDto,
+    @Body() dto: BaseDadosUpdateDto,
   ) {
-    await this.basesDadosService.atualiza(id, dto);
+    await this.baseDadosService.atualiza(id, dto);
     return;
   }
 
   @Delete(':id')
   @HttpCode(HttpStatus.NO_CONTENT)
   async exclui(@Param('id', ParseIntPipe) id: number) {
-    await this.basesDadosService.exclui(id);
+    await this.baseDadosService.exclui(id);
     return;
   }
 }

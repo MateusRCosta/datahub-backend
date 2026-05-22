@@ -23,7 +23,7 @@ import { IntegracaoCampanhaUpdateDto } from './dto/integracao-campanha-update.dt
 import { IntegracaoCampanhaService } from './integracao-campanha.service';
 
 @Controller('integracoes-campanhas')
-@Roles(Permissao.EDITAR_INTEGRACOES)
+@Roles(Permissao.GERENCIAR_INTEGRACOES)
 export class IntegracaoCampanhaController {
   constructor(
     private readonly integracaoCampanhaService: IntegracaoCampanhaService,

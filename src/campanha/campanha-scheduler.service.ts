@@ -1,7 +1,7 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { Cron, CronExpression } from '@nestjs/schedule';
 import { PrismaService } from 'src/config/prisma.service';
-import { CampanhaJobService } from './campanha-job.service';
+import { CampanhaExecucaoService } from './campanha-execucao.service';
 import { CampanhaReservada } from './types/campanha-job.type';
 import { STATUS_CAMPANHA } from './types/campanha.type';
 
@@ -10,7 +10,7 @@ export class CampanhaSchedulerService {
   private readonly logger = new Logger(CampanhaSchedulerService.name);
 
   constructor(
-    private readonly campanhaJobService: CampanhaJobService,
+    private readonly campanhaExecucaoService: CampanhaExecucaoService,
     private readonly prismaService: PrismaService,
   ) {}
 
@@ -24,7 +24,7 @@ export class CampanhaSchedulerService {
       }
 
       try {
-        await this.campanhaJobService.executaCampanha(campanha.id);
+        await this.campanhaExecucaoService.executaCampanha(campanha.id);
       } catch (error: unknown) {
         this.logger.error(
           `Erro ao executar campanha ${campanha.id}`,

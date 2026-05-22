@@ -2,7 +2,7 @@ import { Injectable } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
 import { PaginatedResponse } from 'src/common/interfaces/paginated-response.interface';
 import { PrismaService } from 'src/config/prisma.service';
-import { CLIENTES_CAMPANHA_BATCH_SIZE } from './campanha.constants';
+import { CLIENTES_CAMPANHA_BATCH_SIZE } from './constants';
 import { CampanhaClientesQueryDto } from './dto/campanha-clientes-query.dto';
 import {
   ClienteCampanhaFindAll,

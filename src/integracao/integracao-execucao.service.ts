@@ -21,10 +21,10 @@ import {
   ResultadoExecucao,
   RespostaEtapa,
   TipoRequisicao,
-} from './types/integracoes-execucao.type';
-import { regexChavesVariaveis } from './utils/constants';
-import { METODO } from './utils/type';
-import { BasesDadosService } from 'src/base-dados/base-dados.service';
+  METODO,
+} from './types/integracao.type';
+import { regexChavesVariaveis } from './constants';
+import { BaseDadosService } from 'src/base-dados/base-dados.service';
 import { TipoCampo } from 'src/base-dados/util/type';
 
 @Injectable()
@@ -32,7 +32,7 @@ export class IntegracaoExecucaoService {
   constructor(
     private prismaService: PrismaService,
     private httpService: HttpService,
-    private basesDadosService: BasesDadosService,
+    private baseDadosService: BaseDadosService,
   ) {}
 
   async ativa(integracao: Integracao, _idUsuario: number) {
@@ -48,7 +48,7 @@ export class IntegracaoExecucaoService {
     console.log(`[Integracao ${integracao.id}] Iniciando execucao`);
 
     const baseIntegracao = await this.prismaService.$transaction((prisma) =>
-      this.basesDadosService.garanteBaseDaIntegracao(
+      this.baseDadosService.garanteBaseDaIntegracao(
         prisma,
         integracao.id,
         integracao.nome,
@@ -374,7 +374,7 @@ export class IntegracaoExecucaoService {
     );
 
     const resultado = await this.prismaService.$transaction((prisma) =>
-      this.basesDadosService.salvaClientesDaBase(
+      this.baseDadosService.salvaClientesDaBase(
         prisma,
         baseDeDadosId,
         estruturaDaBase,

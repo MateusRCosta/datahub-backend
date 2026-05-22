@@ -1,13 +1,13 @@
 import { IsString, MaxLength, ValidateNested } from 'class-validator';
-import { EstruturaBaseDadosDto } from './bases-dados-estrutura.dto';
+import { BaseDadosEstruturaDto } from './base-dados-estrutura.dto';
 import { Type } from 'class-transformer';
 
-export class BasesDadosCreateDto {
+export class BaseDadosCreateDto {
   @MaxLength(120)
   @IsString()
   nome!: string;
 
   @ValidateNested()
-  @Type(() => EstruturaBaseDadosDto)
-  estrutura!: EstruturaBaseDadosDto[];
+  @Type(() => BaseDadosEstruturaDto)
+  estrutura!: BaseDadosEstruturaDto[];
 }

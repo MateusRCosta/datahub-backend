@@ -26,4 +26,8 @@ export default () => ({
     parallelism: parseInt(process.env.ARGON_PARALLELISM || '1', 10),
     hashLength: parseInt(process.env.ARGON_HASH_LENGTH || '32', 10),
   },
+  view: {
+    maxDepth: parseInt(process.env.MAX_DEPTH || '4', 10),
+    maxJoin: parseInt(process.env.MAX_JOINS || '3', 10),
+  },
 });

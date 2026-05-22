@@ -7,7 +7,7 @@ import {
 } from 'class-validator';
 import { TipoCampo } from '../util/type';
 
-export class EstruturaBaseDadosDto {
+export class BaseDadosEstruturaDto {
   @IsOptional()
   @MaxLength(100)
   @IsString()

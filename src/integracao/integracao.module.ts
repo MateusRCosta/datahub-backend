@@ -4,11 +4,11 @@ import { PrismaService } from '../config/prisma.service';
 import { IntegracaoController } from './integracao.controller';
 import { HttpModule } from '@nestjs/axios';
 import { IntegracaoExecucaoService } from './integracao-execucao.service';
-import { BasesDadosModule } from 'src/base-dados/base-dados.module';
+import { BaseDadosModule } from 'src/base-dados/base-dados.module';
 import { IntegracaoSchedularService } from './integracao-schedular.service';
 
 @Module({
-  imports: [HttpModule, BasesDadosModule],
+  imports: [HttpModule, BaseDadosModule],
   controllers: [IntegracaoController],
   providers: [
     IntegracaoService,

@@ -33,7 +33,7 @@ export class CampanhaUpdateDto {
   @IsOptional()
   @Type(() => Number)
   @IsInt()
-  readonly baseDeDadoId?: number | null;
+  readonly baseDadosId?: number | null;
 
   @IsOptional()
   @IsString()
