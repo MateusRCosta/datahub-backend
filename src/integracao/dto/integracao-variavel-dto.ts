@@ -5,6 +5,7 @@ import {
   MaxLength,
   IsOptional,
   ValidateNested,
+  IsEnum,
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { IntegracaoVariavelIncrementoDto } from './integracao-variavel-incremento-dto';
@@ -21,9 +22,8 @@ export class IntegracaoVariavelDto {
   @IsNotEmpty()
   readonly valor!: string;
 
-  @MaxLength(20)
-  @IsString()
   @IsNotEmpty()
+  @IsEnum(TipoCampo)
   readonly tipo!: TipoCampo;
 
   @IsOptional()
