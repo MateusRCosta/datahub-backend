@@ -176,6 +176,7 @@ model Template {
   id        Int       @id @default(autoincrement()) @db.Integer
   nome      String    @db.VarChar(100)
   config    Json      @db.JsonB
+  quantidadeVars Int  @db.SmallInt() 
   createdAt DateTime  @default(now()) @db.Timestamptz()
   updatedAt DateTime? @db.Timestamptz()
   deletedAt DateTime? @db.Timestamptz()

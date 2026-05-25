@@ -42,6 +42,7 @@ export class TemplateService {
       data: {
         nome: dto.nome,
         integracaoCampanhaId: dto.integracaoCampanhaId,
+        quantidadeVars: dto.quantidadeVars,
         config: dto.config as unknown as Prisma.InputJsonValue,
         usuarioId,
       },
@@ -86,15 +87,10 @@ export class TemplateService {
         select: {
           id: true,
           nome: true,
+          quantidadeVars: true,
           integracaoCampanha: {
             select: {
               provedor: true,
-              nome: true,
-              id: true,
-            },
-          },
-          usuario: {
-            select: {
               nome: true,
             },
           },
@@ -115,16 +111,15 @@ export class TemplateService {
         id: true,
         nome: true,
         config: true,
+        quantidadeVars: true,
         integracaoCampanha: {
           select: {
-            id: true,
             provedor: true,
             nome: true,
           },
         },
         usuario: {
           select: {
-            id: true,
             nome: true,
           },
         },
@@ -144,16 +139,27 @@ export class TemplateService {
     if (
       dto.nome === undefined &&
       dto.provedor === undefined &&
-      dto.config === undefined
+      dto.config === undefined &&
+      dto.quantidadeVars === undefined
     ) {
       throw new BadRequestException(
-        'Informe ao menos um campo para atualizar: nome, provedor, integracaoCampanhaId ou config',
+        'Informe ao menos um campo para atualizar: nome, provedor, integracaoCampanhaId, quantidadeVars ou config',
       );
     }
+    const integracaoCampanhaIdTemplate =
+      await this.prismaService.template.findFirst({
+        where: { id, deletedAt: null },
+        select: {
+          integracaoCampanhaId: true,
+        },
+      });
+
+    if (!integracaoCampanhaIdTemplate?.integracaoCampanhaId)
+      throw new NotFoundException('Template nao encontrado');
 
     if (dto.provedor !== undefined) {
       await this.validaIntegracaoCampanhaEProvedor(
-        dto.integracaoCampanhaId,
+        integracaoCampanhaIdTemplate.integracaoCampanhaId,
         dto.provedor,
       );
     }
@@ -166,6 +172,7 @@ export class TemplateService {
           dto.config !== undefined
             ? (dto.config as unknown as Prisma.InputJsonValue)
             : undefined,
+        quantidadeVars: dto.quantidadeVars,
         updatedAt: new Date(),
       },
     });
@@ -192,14 +199,16 @@ export class TemplateService {
     return { id };
   }
 
-  async existePorId(id: number): Promise<boolean> {
-    const idEcontrado = await this.prismaService.template.findFirst({
+  async retornaQtdVarsPorId(id: number): Promise<number | undefined> {
+    const qtdVars = await this.prismaService.template.findFirst({
       where: { id, deletedAt: null },
       select: {
-        id: true,
+        quantidadeVars: true,
       },
     });
-    return idEcontrado !== null;
+
+    // eslint-disable-next-line @typescript-eslint/no-unsafe-return
+    return qtdVars?.quantidadeVars;
   }
 
   private async validaIntegracaoCampanhaEProvedor(

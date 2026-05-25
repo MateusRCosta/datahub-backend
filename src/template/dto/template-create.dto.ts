@@ -1,8 +1,10 @@
 import {
   IsEnum,
   IsInt,
+  IsNumber,
   IsObject,
   IsString,
+  Max,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
@@ -27,4 +29,8 @@ export class CreateTemplateDto {
   @ValidateNested()
   @Type(getTemplateConfigDtoType)
   readonly config!: Config;
+
+  @IsNumber()
+  @Max(1024)
+  readonly quantidadeVars!: number;
 }

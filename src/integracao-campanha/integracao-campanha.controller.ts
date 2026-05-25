@@ -34,6 +34,12 @@ export class IntegracaoCampanhaController {
     return this.integracaoCampanhaService.retornaTodos(query);
   }
 
+  @Get('/templates')
+  @Roles(Permissao.GERENCIAR_CAMPANHAS)
+  retornaTodosMinimizados(@Query() query: IntegracaoCampanhaFindAllQueryDto) {
+    return this.integracaoCampanhaService.retornaTodosMinimizados(query);
+  }
+
   @Get(':id')
   retornaPorId(@Param('id', ParseIntPipe) id: number) {
     return this.integracaoCampanhaService.retornaPorId(id);

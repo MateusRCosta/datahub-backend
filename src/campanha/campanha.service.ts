@@ -177,12 +177,16 @@ export class CampanhaService {
     this.validaScheduledAt(dto.scheduledAt);
     this.validaCampoReferencia(dto.contatoCampo, 'contatoCampo');
     this.validaVars(dto.vars);
-
-    if (!(await this.templateService.existePorId(dto.templateId)))
-      throw new BadRequestException('O template informado nao foi encontrado');
-
-    if (dto.baseDadosId && dto.viewId)
+    if (
+      dto.baseDadosId !== null &&
+      dto.baseDadosId !== undefined &&
+      dto.viewId !== null &&
+      dto.viewId !== undefined
+    ) {
       throw new BadRequestException('Informe ou uma base ou uma view');
+    }
+
+    await this.validaQuantidadeVarsTemplate(dto.templateId, dto.vars);
 
     await this.validaFonteECampos(
       dto.viewId,
@@ -261,11 +265,16 @@ export class CampanhaService {
     this.validaCampoReferencia(contatoCampo, 'contatoCampo');
     this.validaVars(vars);
 
-    if (!(await this.templateService.existePorId(templateId)))
-      throw new BadRequestException('O template informado nao foi encontrado');
-
-    if (dto.baseDadosId && dto.viewId)
+    if (
+      baseDeDadoId !== null &&
+      baseDeDadoId !== undefined &&
+      viewId !== null &&
+      viewId !== undefined
+    ) {
       throw new BadRequestException('Informe ou uma base ou uma view');
+    }
+
+    await this.validaQuantidadeVarsTemplate(templateId, vars);
 
     await this.validaFonteECampos(viewId, baseDeDadoId, contatoCampo, vars);
 
@@ -432,6 +441,24 @@ export class CampanhaService {
       ) {
         throw new BadRequestException('Referencia de vars invalida');
       }
+    }
+  }
+
+  private async validaQuantidadeVarsTemplate(
+    templateId: number,
+    vars: CampanhaVars,
+  ): Promise<void> {
+    const quantidadeVars =
+      await this.templateService.retornaQtdVarsPorId(templateId);
+
+    if (quantidadeVars === undefined) {
+      throw new BadRequestException('O template informado nao foi encontrado');
+    }
+
+    if (Object.keys(vars).length > quantidadeVars) {
+      throw new BadRequestException(
+        'A qtd de vars e maior do que o permitido pelo template',
+      );
     }
   }
 

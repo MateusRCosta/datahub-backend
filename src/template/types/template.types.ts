@@ -5,7 +5,6 @@ export type Config = UpchatConfigTemplate;
 
 export type TemplateFindAll = Pick<Template, 'id' | 'nome'> & {
   integracaoCampanha: IntegracaoCampanhaFindAllTemplate;
-  usuario: Pick<Usuario, 'nome'>;
 };
 
 export type TemplateFindOne = Pick<
@@ -18,5 +17,5 @@ export type TemplateFindOne = Pick<
 
 type IntegracaoCampanhaFindAllTemplate = Pick<
   IntegracaoCampanha,
-  'id' | 'nome' | 'provedor'
+  'nome' | 'provedor'
 >;

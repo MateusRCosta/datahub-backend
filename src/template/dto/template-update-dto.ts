@@ -1,10 +1,11 @@
 import { Type } from 'class-transformer';
 import {
   IsEnum,
-  IsInt,
+  IsNumber,
   IsObject,
   IsOptional,
   IsString,
+  Max,
   MaxLength,
   ValidateNested,
 } from 'class-validator';
@@ -13,10 +14,6 @@ import type { Config } from '../types/template.types';
 import { PROVEDOR_INTEGRACAO_CAMPANHA } from 'src/integracao-campanha/types/provedor-integracao-campanha.type';
 
 export class UpdateTemplateDto {
-  @Type(() => Number)
-  @IsInt()
-  readonly integracaoCampanhaId!: number;
-
   @IsString()
   @MaxLength(100)
   @IsOptional()
@@ -25,6 +22,10 @@ export class UpdateTemplateDto {
   @IsEnum(PROVEDOR_INTEGRACAO_CAMPANHA)
   @IsOptional()
   readonly provedor!: PROVEDOR_INTEGRACAO_CAMPANHA;
+
+  @IsNumber()
+  @Max(1024)
+  readonly quantidadeVars!: number;
 
   @IsObject()
   @ValidateNested()

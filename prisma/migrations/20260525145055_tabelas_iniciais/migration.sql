@@ -136,6 +136,7 @@ CREATE TABLE "templates" (
     "id" SERIAL NOT NULL,
     "nome" VARCHAR(100) NOT NULL,
     "config" JSONB NOT NULL,
+    "quantidadeVars" SMALLINT NOT NULL,
     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMPTZ,
     "deletedAt" TIMESTAMPTZ,

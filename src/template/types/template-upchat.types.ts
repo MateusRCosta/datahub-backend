@@ -1,4 +1,3 @@
-import { TypeHelpOptions } from 'class-transformer';
 import {
   BotaoFlowDto,
   BotaoPhoneNumberDto,
@@ -28,6 +27,7 @@ export type UpchatConfigTemplate = {
 
 export type Botoes = BotaoFlow | BotaoQuickReply | BotaoUrl | BotaoPhoneNumber;
 interface BotaoBase {
+  tipo: BOTAO_ENUM;
   textoBotao: string;
 }
 export interface BotaoFlow extends BotaoBase {
@@ -55,34 +55,3 @@ export type BotaoDto =
   | BotaoUrlDto
   | BotaoPhoneNumberDto
   | BotaoQuickReplyDto;
-
-export type BotaoDtoType =
-  | typeof BotaoFlowDto
-  | typeof BotaoUrlDto
-  | typeof BotaoPhoneNumberDto
-  | typeof BotaoQuickReplyDto
-  | typeof Object;
-
-export interface BotaoComTipo {
-  tipo?: BOTAO_ENUM;
-}
-export function getBotaoDtoType(typeOptions?: TypeHelpOptions): BotaoDtoType {
-  const dto = typeOptions?.object as BotaoComTipo | undefined;
-
-  switch (dto?.tipo) {
-    case BOTAO_ENUM.FLOW:
-      return BotaoFlowDto;
-
-    case BOTAO_ENUM.QUICK_REPLY:
-      return BotaoQuickReplyDto;
-
-    case BOTAO_ENUM.PHONE_NUMBER:
-      return BotaoPhoneNumberDto;
-
-    case BOTAO_ENUM.URL:
-      return BotaoUrlDto;
-
-    default:
-      return BotaoQuickReplyDto;
-  }
-}

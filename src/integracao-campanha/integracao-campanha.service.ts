@@ -19,6 +19,7 @@ import {
 import { PROVEDOR_INTEGRACAO_CAMPANHA } from './types/provedor-integracao-campanha.type';
 import { AtivaExecucao } from './types/execucao.type';
 import { UpchatService } from './integracao/upchat.service';
+import { paginate } from 'src/common/utils/paginated-response';
 
 @Injectable()
 export class IntegracaoCampanhaService {
@@ -75,17 +76,52 @@ export class IntegracaoCampanhaService {
       this.prismaService.integracaoCampanha.count({ where }),
     ]);
 
-    return {
-      data,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNextPage: page * limit < total,
-        hasPreviousPage: page > 1,
+    return paginate(data, total, page, limit);
+  }
+
+  async retornaTodosMinimizados(query: IntegracaoCampanhaFindAllQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const skip = (page - 1) * limit;
+
+    const where = buildPrismaWhere<Prisma.IntegracaoCampanhaWhereInput>(
+      {
+        id: query.id,
+        provedor: query.provedor,
+        nome: query.nome,
       },
-    };
+      integracaoCampanhaFilterConfig,
+      { deletedAt: null, status: true },
+    );
+
+    if (query.provedor !== undefined) {
+      where.provedor = query.provedor;
+    }
+
+    const orderBy = buildPrismaOrderBy(
+      query.orderBy,
+      query.order,
+      integracaoCampanhaOrderByFields,
+      'createdAt',
+    );
+
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.integracaoCampanha.findMany({
+        where,
+        orderBy,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          nome: true,
+          provedor: true,
+          status: true,
+        },
+      }),
+      this.prismaService.integracaoCampanha.count({ where }),
+    ]);
+
+    return paginate(data, total, page, limit);
   }
 
   async retornaPorId(id: number) {
