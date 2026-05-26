@@ -3,6 +3,8 @@ import {
   Controller,
   Delete,
   Get,
+  HttpCode,
+  HttpStatus,
   Param,
   Patch,
   Post,
@@ -45,6 +47,7 @@ export class IntegracaoController {
   }
 
   @Put(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async atualiza(
     @Body() dto: IntegracaoUpdateDto,
     @UsuarioAtual() usuario: Payload,
@@ -55,6 +58,7 @@ export class IntegracaoController {
   }
 
   @Delete(':id')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async exclui(
     @UsuarioAtual() usuario: Payload,
     @Param('id') idIntegracao: number,
@@ -64,6 +68,7 @@ export class IntegracaoController {
   }
 
   @Patch(':id/status')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async atualizaStatus(
     @UsuarioAtual() usuario: Payload,
     @Param('id') idIntegracao: number,
@@ -78,6 +83,7 @@ export class IntegracaoController {
   }
 
   @Patch(':id/ativar')
+  @HttpCode(HttpStatus.NO_CONTENT)
   async ativa(
     @UsuarioAtual() usuario: Payload,
     @Param('id') idIntegracao: number,
