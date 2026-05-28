@@ -19,5 +19,5 @@ export class ViewCreateDto {
 
   @ValidateNested()
   @Type(() => ViewQueryDto)
-  readonly query!: ViewQueryDto;
+  readonly config!: ViewQueryDto;
 }

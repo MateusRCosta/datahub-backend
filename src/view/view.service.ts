@@ -108,7 +108,7 @@ export class ViewService {
       data: {
         nome: dto.nome,
         descricao: dto.descricao ?? undefined,
-        config: dto.query as unknown as Prisma.InputJsonValue,
+        config: dto.config as unknown as Prisma.InputJsonValue,
         usuarioId,
       },
       select: {
@@ -123,10 +123,10 @@ export class ViewService {
     if (
       dto.nome === undefined &&
       dto.descricao === undefined &&
-      dto.query === undefined
+      dto.config === undefined
     ) {
       throw new BadRequestException(
-        'Informe ao menos um campo para atualizar: nome ou query',
+        'Informe ao menos um campo para atualizar: nome, descricao ou config',
       );
     }
 
@@ -136,8 +136,8 @@ export class ViewService {
         nome: dto.nome,
         descricao: dto.descricao,
         config:
-          dto.query !== undefined
-            ? (dto.query as unknown as Prisma.InputJsonValue)
+          dto.config !== undefined
+            ? (dto.config as unknown as Prisma.InputJsonValue)
             : undefined,
         updatedAt: new Date(),
       },

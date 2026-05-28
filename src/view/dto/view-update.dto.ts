@@ -21,5 +21,5 @@ export class ViewUpdateDto {
   @IsOptional()
   @ValidateNested()
   @Type(() => ViewQueryDto)
-  readonly query?: ViewQueryDto;
+  readonly config?: ViewQueryDto;
 }
