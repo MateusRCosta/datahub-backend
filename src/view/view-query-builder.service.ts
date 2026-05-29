@@ -99,9 +99,7 @@ export class ViewQueryBuilderService {
 
       if (node.type !== TIPO_FILTRO.GROUP) continue;
 
-      if (node.groupFilter.length === 0) {
-        throw new BadRequestException('Grupo de filtros nao pode ser vazio');
-      }
+      if (node.groupFilter.length === 0) continue;
 
       for (const child of node.groupFilter) {
         fila.push({ node: child, depth: depth + 1 });
@@ -308,10 +306,11 @@ export class ViewQueryBuilderService {
       return '';
     }
 
-    const filtros = groupFilters.map((gf) =>
+    let filtros = groupFilters.map((gf) =>
       this.construirGrupoFiltro(gf, ctx, 1),
     );
 
+    filtros = filtros.filter((filtro) => filtro !== null);
     return `(${filtros.join(' AND ')})`;
   }
 
@@ -319,7 +318,7 @@ export class ViewQueryBuilderService {
     groupFilter: GroupFilter,
     ctx: QueryContext,
     depth: number,
-  ): string {
+  ): string | null {
     if (depth > MAX_DEPTH) {
       throw new BadRequestException(
         `A view permite filtros com profundidade maxima de ${MAX_DEPTH}`,
@@ -331,13 +330,18 @@ export class ViewQueryBuilderService {
     }
 
     if (groupFilter.groupFilter.length === 0) {
-      throw new BadRequestException('Grupo de filtros nao pode ser vazio');
+      return null;
     }
 
     const operador = this.toSqlWhereOperador(groupFilter.operadorWhere);
-    const filhos = groupFilter.groupFilter.map((child) =>
-      this.construirGrupoFiltro(child, ctx, depth + 1),
-    );
+
+    const filhos = groupFilter.groupFilter
+      .map((child) => this.construirGrupoFiltro(child, ctx, depth + 1))
+      .filter((child): child is string => Boolean(child));
+
+    if (filhos.length === 0) {
+      return null;
+    }
 
     return `(${filhos.join(` ${operador} `)})`;
   }
