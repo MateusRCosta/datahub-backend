@@ -293,7 +293,7 @@ export class ViewQueryBuilderService {
       `${rootAlias}."deletedAt" IS NULL`,
     ];
 
-    if (query.groupFilter) {
+    if (query.groupFilter && query.groupFilter.length > 0) {
       predicados.push(this.construirGruposFiltroRaiz(query.groupFilter, ctx));
     }
 
@@ -305,7 +305,7 @@ export class ViewQueryBuilderService {
     ctx: QueryContext,
   ): string {
     if (groupFilters.length === 0) {
-      throw new BadRequestException('Lista de filtros nao pode ser vazia');
+      return '';
     }
 
     const filtros = groupFilters.map((gf) =>

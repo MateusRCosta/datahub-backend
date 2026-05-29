@@ -298,16 +298,6 @@ export class IntegracaoService {
 
       const integracaoAtiva = { ...integracao, status: true };
 
-      await this.prismaService.integracao.update({
-        where: { id: integracao.id },
-        data: { status: true },
-      });
-
-      await this.integracaoSchedularService.aplicaAgendamentoPorStatus(
-        integracaoAtiva,
-        integracaoAtiva.status,
-      );
-
       void this.integracaoExecucaoService
         .ativa(integracaoAtiva, idUsuario)
         .catch((error: unknown) => {
