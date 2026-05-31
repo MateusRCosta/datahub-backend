@@ -19,14 +19,7 @@ export type CampanhaVars = Record<string, string>;
 
 export type CampanhaFindAll = Pick<
   Campanha,
-  | 'id'
-  | 'nome'
-  | 'status'
-  | 'scheduledAt'
-  | 'executedAt'
-  | 'finishedAt'
-  | 'createdAt'
-  | 'updatedAt'
+  'id' | 'nome' | 'status' | 'scheduledAt'
 > & {
   readonly usuario: Pick<Usuario, 'nome'>;
 } & {
@@ -40,7 +33,15 @@ export type CampanhaFindAll = Pick<
 };
 
 export type CampanhaFindById = CampanhaFindAll &
-  Pick<Campanha, 'vars' | 'contatoCampo'> & {
+  Pick<
+    Campanha,
+    | 'vars'
+    | 'contatoCampo'
+    | 'executedAt'
+    | 'finishedAt'
+    | 'createdAt'
+    | 'updatedAt'
+  > & {
     readonly template: Pick<Template, 'id'>;
   };
 

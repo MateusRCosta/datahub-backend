@@ -87,8 +87,6 @@ export class CampanhaService {
           nome: true,
           status: true,
           scheduledAt: true,
-          executedAt: true,
-          finishedAt: true,
           template: {
             select: {
               nome: true,
@@ -115,8 +113,6 @@ export class CampanhaService {
               nome: true,
             },
           },
-          createdAt: true,
-          updatedAt: true,
         },
       }),
       this.prismaService.campanha.count({ where }),
