@@ -134,13 +134,13 @@ export class CampanhaService {
         executedAt: true,
         finishedAt: true,
         view: {
-          select: { nome: true },
+          select: { id: true, nome: true },
         },
         baseDeDados: {
-          select: { nome: true },
+          select: { id: true, nome: true },
         },
         usuario: {
-          select: { nome: true },
+          select: { id: true, nome: true },
         },
         createdAt: true,
         updatedAt: true,

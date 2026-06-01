@@ -31,6 +31,12 @@ export class ViewController {
     return this.viewService.retornaTodos(query);
   }
 
+  @Get('/campanhas')
+  @Roles(Permissao.GERENCIAR_CAMPANHAS)
+  retornaTodosParaCampanha(@Query() query: ViewFindAllDto) {
+    return this.viewService.retornaTodosParaCampanha(query);
+  }
+
   @Get(':id')
   retornaPorId(@Param('id', ParseIntPipe) id: number) {
     return this.viewService.retornaPorId(id);

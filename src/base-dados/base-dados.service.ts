@@ -92,6 +92,74 @@ export class BaseDadosService {
     return paginate(data, total, page, limit);
   }
 
+  async retornaTodosParaCampanha(query: BaseDadosFindAllQueryDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const skip = (page - 1) * limit;
+
+    const where = buildPrismaWhere<Prisma.BaseDeDadosWhereInput>(
+      {
+        id: query.id,
+        nome: query.nome,
+        usuarioId: query.usuarioId,
+        integracaoId: query.integracaoId,
+      },
+      baseDadosFilterConfig,
+      { deletedAt: null },
+    );
+
+    const orderBy = buildPrismaOrderBy(
+      query.orderBy,
+      query.order,
+      baseDadosOrderByFields,
+      'createdAt',
+    );
+
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.baseDeDados.findMany({
+        where,
+        orderBy,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          nome: true,
+          estrutura: true,
+          integracao: {
+            select: {
+              nome: true,
+            },
+          },
+          usuario: {
+            select: {
+              nome: true,
+            },
+          },
+          _count: {
+            select: {
+              clientes: true,
+            },
+          },
+        },
+      }),
+      this.prismaService.baseDeDados.count({ where }),
+    ]);
+    const dataFinal = data.flatMap((baseDados) => {
+      const estruturaDaBase =
+        baseDados.estrutura as unknown as BaseDadosEstruturaDto[];
+      if (Array.isArray(estruturaDaBase) && estruturaDaBase.length > 0) {
+        const camposSelecionados = estruturaDaBase.flatMap((est) => ({
+          campo: est.cabecalho,
+          rotulo: est.rotulo,
+        }));
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { estrutura, ...baseSemEstrutura } = baseDados;
+        return { ...baseSemEstrutura, campos: camposSelecionados };
+      }
+    });
+    return paginate(dataFinal, total, page, limit);
+  }
+
   async retornaPorId(id: number) {
     const baseDeDados = await this.prismaService.baseDeDados.findUnique({
       where: { id, deletedAt: null },

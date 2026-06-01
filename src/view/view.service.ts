@@ -78,6 +78,60 @@ export class ViewService {
     return paginate(data, total, page, limit);
   }
 
+  async retornaTodosParaCampanha(query: ViewFindAllDto) {
+    const page = query.page ?? 1;
+    const limit = query.limit ?? 10;
+    const skip = (page - 1) * limit;
+
+    const where = buildPrismaWhere<Prisma.ViewWhereInput>(
+      {
+        id: query.id,
+        nome: query.nome,
+      },
+      viewFilterConfig,
+      { deletedAt: null },
+    );
+
+    const orderBy = buildPrismaOrderBy(
+      query.orderBy,
+      query.order,
+      viewOrderByFields,
+      'createdAt',
+    );
+
+    const [data, total] = await this.prismaService.$transaction([
+      this.prismaService.view.findMany({
+        where,
+        orderBy,
+        skip,
+        take: limit,
+        select: {
+          id: true,
+          nome: true,
+          config: true,
+          createdAt: true,
+          updatedAt: true,
+        },
+      }),
+      this.prismaService.view.count({ where }),
+    ]);
+    const dataFinal = data.flatMap((view) => {
+      const query = view.config as QueryView;
+      if (Array.isArray(query.select) && query.select.length > 0) {
+        const camposSelecionados = query.select.flatMap((select) =>
+          select.campos.map((campo) => ({
+            campo: campo.campo,
+            rotulo: campo.rotulo,
+          })),
+        );
+        // eslint-disable-next-line @typescript-eslint/no-unused-vars
+        const { config, ...viewSemConfig } = view;
+        return { ...viewSemConfig, campos: camposSelecionados };
+      }
+    });
+    return paginate(dataFinal, total, page, limit);
+  }
+
   async retornaPorId(id: number): Promise<ViewDetails> {
     const view = await this.prismaService.view.findFirst({
       where: { id, deletedAt: null },

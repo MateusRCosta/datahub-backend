@@ -36,6 +36,12 @@ export class BaseDadosController {
     return this.baseDadosService.retornaTodos(query);
   }
 
+  @Get('/campanhas')
+  @Roles(Permissao.GERENCIAR_CAMPANHAS)
+  retornaTodosParaCampanha(@Query() query: BaseDadosFindAllQueryDto) {
+    return this.baseDadosService.retornaTodosParaCampanha(query);
+  }
+
   @Get(':id')
   retornaPorId(@Param('id', ParseIntPipe) id: number) {
     return this.baseDadosService.retornaPorId(id);
