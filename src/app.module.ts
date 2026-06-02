@@ -1,8 +1,10 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ScheduleModule } from '@nestjs/schedule';
+import { LoggerModule } from 'nestjs-pino';
 import { AuthModule } from './auth/auth.module';
 import configuration from './config/configuration';
+import { loggerConfig } from './config/logger.config';
 import { UsuariosModule } from './usuario/usuario.module';
 import { BaseDadosModule } from './base-dados/base-dados.module';
 import { ClientesModule } from './cliente/cliente.module';
@@ -15,6 +17,7 @@ import { CampanhaModule } from './campanha/campanha.module';
 @Module({
   imports: [
     ConfigModule.forRoot({ load: [configuration] }),
+    LoggerModule.forRoot(loggerConfig),
     ScheduleModule.forRoot(),
     AuthModule,
     UsuariosModule,
