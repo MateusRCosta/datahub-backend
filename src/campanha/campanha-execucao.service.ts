@@ -29,6 +29,7 @@ import {
 } from './types/cliente-campanha.type';
 import { ViewRowCampanha } from './types/campanha-job.type';
 import { Mensagem } from 'src/integracao-campanha/types/execucao.type';
+import { UpchatConfigTemplate } from 'src/template/types/template-upchat.types';
 
 @Injectable()
 export class CampanhaExecucaoService {
@@ -175,7 +176,8 @@ export class CampanhaExecucaoService {
             config: campanha.template.integracaoCampanha
               .config as unknown as UpchatConfig,
             clientes: mensagens,
-            templateId: campanha.template.id,
+            templateConfig: campanha.template
+              .config as unknown as UpchatConfigTemplate,
             nomeCampanha: campanha.nome,
           });
           break;
@@ -476,13 +478,6 @@ export class CampanhaExecucaoService {
 
       return value;
     });
-  }
-
-  private resolveReferencia(
-    value: string,
-    accessor: (referencia: string) => unknown,
-  ): string {
-    return this.toStringOrEmpty(accessor(this.getReferencia(value)));
   }
 
   private async buscaQueryView(viewId: number): Promise<QueryView> {

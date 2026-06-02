@@ -27,6 +27,7 @@ import {
   CampanhaFindAll,
   CampanhaFindById,
   CampanhaVars,
+  Campo,
   STATUS_CAMPANHA,
 } from './types/campanha.type';
 import { ClienteCampanhaService } from './cliente-campanha.service';
@@ -134,13 +135,13 @@ export class CampanhaService {
         executedAt: true,
         finishedAt: true,
         view: {
-          select: { id: true, nome: true },
+          select: { id: true, nome: true, config: true },
         },
         baseDeDados: {
-          select: { id: true, nome: true },
+          select: { id: true, nome: true, estrutura: true },
         },
         usuario: {
-          select: { id: true, nome: true },
+          select: { nome: true },
         },
         createdAt: true,
         updatedAt: true,
@@ -148,6 +149,7 @@ export class CampanhaService {
           select: {
             id: true,
             nome: true,
+            quantidadeVars: true,
             integracaoCampanha: {
               select: {
                 nome: true,
@@ -163,7 +165,41 @@ export class CampanhaService {
       throw new NotFoundException('Campanha nao encontrada');
     }
 
-    return campanha;
+    const campos = this.retornaCamposDaCampanha(campanha);
+
+    return { ...campanha, campos };
+  }
+
+  private retornaCamposDaCampanha(
+    campanha: CampanhaFindById,
+  ): Campo[] | undefined {
+    if (campanha.baseDeDados) {
+      const estruturaDaBase = campanha.baseDeDados
+        .estrutura as unknown as BaseDadosEstruturaDto[];
+
+      if (Array.isArray(estruturaDaBase) && estruturaDaBase.length > 0) {
+        const camposSelecionados = estruturaDaBase.flatMap((est) => ({
+          campo: est.cabecalho,
+          rotulo: est.rotulo,
+        }));
+
+        return camposSelecionados;
+      }
+    }
+
+    if (campanha.view) {
+      const query = campanha.view.config as QueryView;
+      if (Array.isArray(query.select) && query.select.length > 0) {
+        const camposSelecionados = query.select.flatMap((select) =>
+          select.campos.map((campo) => ({
+            campo: campo.campo,
+            rotulo: campo.rotulo,
+          })),
+        );
+
+        return camposSelecionados;
+      }
+    }
   }
 
   async cria(

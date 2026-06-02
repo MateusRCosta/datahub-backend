@@ -1,3 +1,4 @@
+import { UpchatConfigTemplate } from 'src/template/types/template-upchat.types';
 import { Mensagem } from './execucao.type';
 import { PROVEDOR_INTEGRACAO_CAMPANHA } from './provedor-integracao-campanha.type';
 
@@ -21,7 +22,7 @@ export type UpchatExecuta = {
   provedor: PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT;
   config: UpchatConfig;
   clientes: Mensagem[];
-  templateId: number;
+  templateConfig: UpchatConfigTemplate;
   nomeCampanha: string;
 };
 

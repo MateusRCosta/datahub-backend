@@ -42,7 +42,13 @@ export type CampanhaFindById = CampanhaFindAll &
     | 'createdAt'
     | 'updatedAt'
   > & {
-    readonly template: Pick<Template, 'id'>;
+    readonly template: Pick<Template, 'id' | 'quantidadeVars'>;
+  } & {
+    readonly baseDeDados: Pick<BaseDeDados, 'id' | 'estrutura'> | null;
+  } & {
+    readonly view: Pick<View, 'id' | 'config'> | null;
+  } & {
+    campos?: Campo[];
   };
 
 export type CampanhaExecucao = Pick<
@@ -67,3 +73,8 @@ export type SourceConfig =
       readonly tipo: 'view';
       readonly viewId: number;
     };
+
+export type Campo = {
+  campo: string;
+  rotulo?: string | null;
+};

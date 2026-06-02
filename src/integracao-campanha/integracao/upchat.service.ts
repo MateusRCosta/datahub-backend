@@ -20,14 +20,14 @@ export class UpchatService {
   async enviaMensagem(dto: UpchatExecuta) {
     console.log('[UpchatService] Iniciando envio de mensagem', {
       campanha: dto.nomeCampanha,
-      templateId: dto.templateId,
+      templateConfigId: dto.templateConfig.id,
       totalClientes: dto.clientes.length,
     });
 
     const clientesRaw = dto.clientes;
     const mensagens = this.constroiBodyMensagem(
       clientesRaw,
-      dto.templateId,
+      dto.templateConfig.id,
       dto.nomeCampanha,
     );
 
@@ -50,6 +50,7 @@ export class UpchatService {
           data: body,
         }),
       );
+
       const enqueueIds = resultado.data.success ?? [];
       console.log('[UpchatService] Mensagens enfileiradas', {
         totalEnfileiradas: enqueueIds.length,
@@ -99,7 +100,7 @@ export class UpchatService {
 
   constroiBodyMensagem(
     clientesRaw: Mensagem[],
-    templateId: number,
+    templateConfigId: number,
     nomeCampanha: string,
   ) {
     return clientesRaw.map((cliente) => {
@@ -107,7 +108,7 @@ export class UpchatService {
         cliente.parametros.length > 0 ? cliente.parametros : [];
 
       return {
-        templateId: templateId,
+        templateId: templateConfigId,
         number: cliente.meio,
         country: 'BR',
         campaignName: nomeCampanha,
