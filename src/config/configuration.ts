@@ -1,11 +1,6 @@
 export default () => ({
   port: parseInt(process.env.PORT || '3000', 10),
-  development:
-    process.env.NODE_ENV === 'development'
-      ? false
-      : process.env.NODE_ENV === 'staging'
-        ? false
-        : true,
+  development: process.env.NODE_ENV === 'development' ? false : true,
   databaseUrl:
     process.env.DATABASE_URL ||
     'postgresql://development:development@127.0.0.1:31234/development',
