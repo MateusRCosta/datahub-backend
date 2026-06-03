@@ -22,7 +22,7 @@ export class AuthGuard implements CanActivate {
     private reflector: Reflector,
   ) {}
 
-  canActivate(context: ExecutionContext): boolean {
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const permissoesNecessarias = this.reflector.getAllAndOverride<Permissao[]>(
       PERMISSOES_KEY,
       [context.getHandler(), context.getClass()],
@@ -50,6 +50,12 @@ export class AuthGuard implements CanActivate {
     try {
       const payload = this.authService.verifyAccessToken(accessToken);
       request.user = payload;
+
+      const id = await this.authService.retornaSessaoIdPeloSidERevokedAtNull(
+        payload.sid,
+      );
+      console.log(`sid: ${payload.sid}\n id: ${id}`);
+      if (!id) throw new ForbiddenException();
 
       if (payload.admin) return true;
 

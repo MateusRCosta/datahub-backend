@@ -254,6 +254,18 @@ export class AuthService {
     });
   }
 
+  async retornaSessaoIdPeloSidERevokedAtNull(sid: string) {
+    const obj = await this.prismaService.sessao.findFirst({
+      where: {
+        sid: { equals: sid },
+        revokedAt: { equals: null },
+      },
+      select: { id: true },
+    });
+    if (obj) return obj.id;
+    return null;
+  }
+
   private assinaAccessToken(
     id: number,
     sid: string,
