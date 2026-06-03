@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import { join } from 'node:path';
 import { Params } from 'nestjs-pino';
+import { FastifyRequest, FastifyReply } from 'fastify';
 
 const isDevelopment = process.env.NODE_ENV === 'development';
 
-const extractUserIdFromCookie = (
+const getUsuarioIdDoCookie = (
   cookieHeader: string | undefined,
 ): string | null => {
   if (!cookieHeader) return null;
@@ -19,10 +20,14 @@ const extractUserIdFromCookie = (
   if (!token) return null;
 
   try {
-    const payload = JSON.parse(
+    const payload: unknown = JSON.parse(
       Buffer.from(token.split('.')[1], 'base64url').toString(),
     );
-    return payload['sub'] ?? null;
+
+    if (payload !== null && typeof payload === 'object' && 'sub' in payload) {
+      return String((payload as Record<string, unknown>).sub);
+    }
+    return null;
   } catch {
     return null;
   }
@@ -33,27 +38,25 @@ export const loggerConfig: Params = {
     level: process.env.LOG_LEVEL || (isDevelopment ? 'debug' : 'info'),
     genReqId: (request) =>
       request.headers['x-request-id']?.toString() || randomUUID(),
-    customProps: (request, response) => {
-      const req = request as any;
-      const res = response as any;
+    customProps: (request) => {
+      const req = request as unknown as FastifyRequest;
 
-      const cookieHeader = req.headers?.cookie;
-      const userId = extractUserIdFromCookie(cookieHeader);
-
-      const error = res.locals?.error ?? req.routeOptions?.config?.error;
+      const usuarioId = getUsuarioIdDoCookie(req.headers?.cookie);
 
       return {
         requestId: req.id,
-        usuarioId: userId,
-        error: error?.message ?? undefined,
+        usuarioId: usuarioId,
+        body: req.body,
       };
     },
+    autoLogging: {
+      ignore: (req) => req.method === 'OPTIONS',
+    },
     serializers: {
-      req(request) {
+      req(request: FastifyRequest) {
         return {
           method: request.method,
           url: request.url,
-          statusCode: request.raw?.statusCode,
           headers: {
             host: request.headers?.host,
             'sec-ch-ua-platform': request.headers?.['sec-ch-ua-platform'],
@@ -63,12 +66,27 @@ export const loggerConfig: Params = {
             origin: request.headers?.origin,
             referer: request.headers?.referer,
           },
-          body: request.raw?.body,
         };
       },
-      res(reply) {
+      res(reply: FastifyReply) {
+        let errorMessage: string | undefined;
+
+        try {
+          const payload = (reply as unknown as Record<string, unknown>)[
+            'payload'
+          ] as string;
+          const parsed: unknown = JSON.parse(payload);
+
+          errorMessage =
+            parsed !== null && typeof parsed === 'object' && 'message' in parsed
+              ? String((parsed as Record<string, unknown>).message)
+              : undefined;
+        } catch {
+          errorMessage = undefined;
+        }
         return {
           statusCode: reply.statusCode,
+          errorMessage,
         };
       },
     },
