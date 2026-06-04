@@ -79,12 +79,12 @@ export type ViewListItem = {
   id: number;
   nome: string;
   usuario: Pick<Usuario, 'nome'>;
-  createdAt: Date;
-  updatedAt: Date | null;
 };
 
 export type ViewDetails = ViewListItem & {
   config: Prisma.JsonValue;
+  createdAt: Date;
+  updatedAt: Date | null;
 };
 
 export type ViewRowWithClienteId = Record<string, unknown> & {

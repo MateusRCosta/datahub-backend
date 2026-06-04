@@ -54,13 +54,12 @@ export class AuthGuard implements CanActivate {
       const id = await this.authService.retornaSessaoIdPeloSidERevokedAtNull(
         payload.sid,
       );
-      console.log(`sid: ${payload.sid}\n id: ${id}`);
-      if (!id) throw new ForbiddenException();
+      if (!id) throw new UnauthorizedException();
 
       if (payload.admin) return true;
 
       if (adminOnly) {
-        throw new ForbiddenException('Apenas administradores podem acessar');
+        throw new ForbiddenException();
       }
 
       if (!permissoesNecessarias || permissoesNecessarias.length === 0) {
@@ -74,7 +73,7 @@ export class AuthGuard implements CanActivate {
       );
 
       if (!temPermissao) {
-        throw new ForbiddenException('Sem permissão para acessar esta rota');
+        throw new ForbiddenException();
       }
     } catch (error) {
       if (

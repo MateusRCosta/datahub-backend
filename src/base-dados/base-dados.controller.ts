@@ -36,8 +36,8 @@ export class BaseDadosController {
     return this.baseDadosService.retornaTodos(query);
   }
 
-  @Get('/campanhas')
-  @Roles(Permissao.GERENCIAR_CAMPANHAS)
+  @Get('/campos')
+  @Roles(Permissao.GERENCIAR_CAMPANHAS, Permissao.GERENCIAR_VISUALIZACOES)
   retornaTodosParaCampanha(@Query() query: BaseDadosFindAllQueryDto) {
     return this.baseDadosService.retornaTodosParaCampanha(query);
   }

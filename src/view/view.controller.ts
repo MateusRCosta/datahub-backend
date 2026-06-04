@@ -31,8 +31,8 @@ export class ViewController {
     return this.viewService.retornaTodos(query);
   }
 
-  @Get('/campanhas')
-  @Roles(Permissao.GERENCIAR_CAMPANHAS)
+  @Get('/campos')
+  @Roles(Permissao.GERENCIAR_CAMPANHAS, Permissao.GERENCIAR_VISUALIZACOES)
   retornaTodosParaCampanha(@Query() query: ViewFindAllDto) {
     return this.viewService.retornaTodosParaCampanha(query);
   }
