@@ -113,6 +113,9 @@ export class ViewService {
     ]);
     const dataFinal = data.flatMap((view) => {
       const query = view.config as QueryView;
+      // eslint-disable-next-line @typescript-eslint/no-unused-vars
+      const { config, ...viewSemConfig } = view;
+
       if (Array.isArray(query.select) && query.select.length > 0) {
         const camposSelecionados = query.select.flatMap((select) =>
           select.campos.map((campo) => ({
@@ -120,10 +123,9 @@ export class ViewService {
             rotulo: campo.rotulo,
           })),
         );
-        // eslint-disable-next-line @typescript-eslint/no-unused-vars
-        const { config, ...viewSemConfig } = view;
         return { ...viewSemConfig, campos: camposSelecionados };
       }
+      return { ...viewSemConfig, campos: null };
     });
     return paginate(dataFinal, total, page, limit);
   }
