@@ -1,6 +1,7 @@
 import {
   BadRequestException,
   Injectable,
+  InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
@@ -81,7 +82,11 @@ export class CampanhaExecucaoService {
         return;
       }
 
-      await this.enviaBatch(campanha, pendentes);
+      try {
+        await this.enviaBatch(campanha, pendentes);
+      } catch {
+        continue;
+      }
     }
   }
 
@@ -164,25 +169,36 @@ export class CampanhaExecucaoService {
         provedor: campanha.template.integracaoCampanha.provedor,
         totalMensagens: mensagens.length,
       });
-
-      switch (
-        campanha.template.integracaoCampanha
-          .provedor as PROVEDOR_INTEGRACAO_CAMPANHA
-      ) {
-        case PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT:
-          await this.integracaoCampanhaService.executa({
-            provedor: campanha.template.integracaoCampanha
-              .provedor as PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT,
-            config: campanha.template.integracaoCampanha
-              .config as unknown as UpchatConfig,
-            clientes: mensagens,
-            templateConfig: campanha.template
-              .config as unknown as UpchatConfigTemplate,
-            nomeCampanha: campanha.nome,
-          });
-          break;
-        default:
-          console.log('Integracao nao configurada ainda');
+      try {
+        switch (
+          campanha.template.integracaoCampanha
+            .provedor as PROVEDOR_INTEGRACAO_CAMPANHA
+        ) {
+          case PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT:
+            await this.integracaoCampanhaService.executa({
+              provedor: campanha.template.integracaoCampanha
+                .provedor as PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT,
+              config: campanha.template.integracaoCampanha
+                .config as unknown as UpchatConfig,
+              clientes: mensagens,
+              templateConfig: campanha.template
+                .config as unknown as UpchatConfigTemplate,
+              nomeCampanha: campanha.nome,
+            });
+            break;
+          default:
+            console.log('Integracao nao configurada ainda');
+        }
+      } catch (e: unknown) {
+        if (
+          e instanceof BadRequestException ||
+          e instanceof InternalServerErrorException
+        ) {
+          await this.clienteCampanhaService.atualizaStatusClientes(
+            clienteCampanhaIds,
+            STATUS_CLIENTE_CAMPANHA.ERRO,
+          );
+        }
       }
 
       await this.clienteCampanhaService.atualizaStatusClientes(
@@ -329,6 +345,7 @@ export class CampanhaExecucaoService {
   }
 
   private async finalizaSeNaoHouverPendentes(id: number): Promise<void> {
+    const finalizacao = new Date();
     const pendentes =
       await this.clienteCampanhaService.contaPendentesOuEmEnvio(id);
 
@@ -342,16 +359,17 @@ export class CampanhaExecucaoService {
 
     await this.prismaService.campanha.updateMany({
       where: {
-        id,
+        id: id,
         deletedAt: null,
         status: STATUS_CAMPANHA.EM_ENVIO,
       },
       data: {
         status: STATUS_CAMPANHA.ENVIADA,
-        finishedAt: new Date(),
-        updatedAt: new Date(),
+        updatedAt: finalizacao,
+        finishedAt: finalizacao,
       },
     });
+
     console.log('[CampanhaJobService] Campanha finalizada', { id });
   }
 
@@ -422,7 +440,9 @@ export class CampanhaExecucaoService {
         tipo: 'base',
         baseDeDadoId,
         campos: new Set(
-          this.toEstrutura(base.estrutura).map((item) => item.cabecalho),
+          this.toEstrutura(base.estrutura).map(
+            (item) => item.rotulo || item.cabecalho,
+          ),
         ),
       };
     }

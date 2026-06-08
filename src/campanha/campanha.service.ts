@@ -441,7 +441,9 @@ export class CampanhaService {
       estruturaTipada.push(
         ...(base.estrutura as unknown as BaseDadosEstruturaDto[]),
       );
-      return new Set(estruturaTipada.map((item) => item.cabecalho));
+      return new Set(
+        estruturaTipada.map((item) => item.rotulo || item.cabecalho),
+      );
     }
 
     return new Set();
