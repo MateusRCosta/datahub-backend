@@ -220,11 +220,26 @@ export class CampanhaService {
 
     await this.validaQuantidadeVarsTemplate(dto.templateId, dto.vars);
 
+    let estrutura: BaseDadosEstruturaDto[] = [];
+    let contatoCampo: string;
+    if (dto.baseDadosId) {
+      estrutura = await this.buscaEstrutura(dto.baseDadosId);
+      contatoCampo =
+        estrutura.find(
+          (est) =>
+            est.cabecalho === dto.contatoCampo ||
+            est.rotulo === dto.contatoCampo,
+        )?.cabecalho || '';
+    } else {
+      contatoCampo = dto.contatoCampo;
+    }
+
     await this.validaFonteECampos(
       dto.viewId,
       dto.baseDadosId,
-      dto.contatoCampo,
+      contatoCampo,
       dto.vars,
+      estrutura,
     );
 
     return this.prismaService.campanha.create({
@@ -291,7 +306,7 @@ export class CampanhaService {
       dto.baseDadosId !== undefined
         ? dto.baseDadosId
         : campanhaAtual.baseDeDadoId;
-    const contatoCampo = dto.contatoCampo ?? String(campanhaAtual.contatoCampo);
+    let contatoCampo = dto.contatoCampo ?? String(campanhaAtual.contatoCampo);
     const vars = dto.vars ?? this.toCampanhaVars(campanhaAtual.vars);
 
     this.validaCampoReferencia(contatoCampo, 'contatoCampo');
@@ -308,7 +323,23 @@ export class CampanhaService {
 
     await this.validaQuantidadeVarsTemplate(templateId, vars);
 
-    await this.validaFonteECampos(viewId, baseDeDadoId, contatoCampo, vars);
+    let estrutura: BaseDadosEstruturaDto[] = [];
+    if (baseDeDadoId) {
+      estrutura = await this.buscaEstrutura(baseDeDadoId);
+      contatoCampo =
+        estrutura.find(
+          (est) =>
+            est.cabecalho === contatoCampo || est.rotulo === contatoCampo,
+        )?.cabecalho || '';
+    }
+
+    await this.validaFonteECampos(
+      viewId,
+      baseDeDadoId,
+      contatoCampo,
+      vars,
+      estrutura,
+    );
 
     const result = await this.prismaService.campanha.updateMany({
       where: { id, deletedAt: null, status: STATUS_CAMPANHA.PENDENTE },
@@ -393,6 +424,7 @@ export class CampanhaService {
     baseDeDadoId: number | null | undefined,
     contatoCampo: string,
     vars: CampanhaVars,
+    estrutura?: BaseDadosEstruturaDto[],
   ): Promise<void> {
     const referencias = [
       contatoCampo,
@@ -402,14 +434,17 @@ export class CampanhaService {
     ];
 
     if (baseDeDadoId !== undefined && baseDeDadoId !== null) {
-      const campos = await this.buscaCamposBase(baseDeDadoId);
+      if (!estrutura || estrutura.length === 0)
+        throw new BadRequestException('Base nao encontrada');
 
       for (const referencia of referencias) {
-        if (!campos.has(referencia)) {
-          throw new BadRequestException(
-            `Campo "${referencia}" nao existe na base de dados`,
-          );
-        }
+        estrutura.map((est) => {
+          if (est.rotulo === referencia || est.cabecalho === referencia) {
+            throw new BadRequestException(
+              `Campo "${referencia}" nao existe na base`,
+            );
+          }
+        });
       }
       return;
     }
@@ -428,7 +463,9 @@ export class CampanhaService {
     }
   }
 
-  private async buscaCamposBase(baseDeDadoId: number): Promise<Set<string>> {
+  private async buscaEstrutura(
+    baseDeDadoId: number,
+  ): Promise<BaseDadosEstruturaDto[]> {
     const base =
       await this.baseDadosService.retornaEstruturaPorId(baseDeDadoId);
 
@@ -441,14 +478,9 @@ export class CampanhaService {
       estruturaTipada.push(
         ...(base.estrutura as unknown as BaseDadosEstruturaDto[]),
       );
-      return new Set(
-        estruturaTipada.map((item) => item.rotulo || item.cabecalho),
-      );
     }
-
-    return new Set();
+    return estruturaTipada;
   }
-
   private validaScheduledAt(scheduledAt: Date): void {
     if (scheduledAt.getTime() < Date.now()) {
       throw new BadRequestException(
@@ -536,7 +568,7 @@ export class CampanhaService {
       return null;
     }
 
-    return `b${select.joinIndex}_${campo.rotulo}`;
+    return `b${select.joinIndex}-${campo.rotulo}`;
   }
 
   private getReferencia(value: string): string {

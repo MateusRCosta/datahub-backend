@@ -169,6 +169,12 @@ export class CampanhaExecucaoService {
         provedor: campanha.template.integracaoCampanha.provedor,
         totalMensagens: mensagens.length,
       });
+      mensagens.map((mensagem) => {
+        console.log(`meio: ${mensagem.meio}`);
+        mensagem.parametros.map((param, index) =>
+          console.log(`${index} - ${param}`),
+        );
+      });
       try {
         switch (
           campanha.template.integracaoCampanha
@@ -461,7 +467,6 @@ export class CampanhaExecucaoService {
     dados: Prisma.JsonValue,
   ): (referencia: string) => unknown {
     const record = this.toRecord(dados);
-
     return (referencia: string) => record[referencia];
   }
 
@@ -540,7 +545,7 @@ export class CampanhaExecucaoService {
       return null;
     }
 
-    return `${campo.rotulo}`;
+    return `b${select.joinIndex}-${campo.rotulo}`;
   }
 
   private getReferencia(value: string): string {

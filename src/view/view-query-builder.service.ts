@@ -228,8 +228,9 @@ export class ViewQueryBuilderService {
       this.obterTipoCampo(ctx, baseDadosId, campo.campo);
       const field = campo.campo;
       const outputAlias = campo.rotulo;
+      const uniqueOutputAlias = `b${select.joinIndex}-${outputAlias}`;
 
-      return `${alias}."dados" ->> '${field}' AS "${outputAlias}"`;
+      return `${alias}."dados" ->> '${field}' AS "${uniqueOutputAlias}"`;
     });
   }
 
