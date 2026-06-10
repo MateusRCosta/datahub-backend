@@ -465,7 +465,7 @@ export class CampanhaExecucaoService {
 
   private montaAccessorBase(
     dados: Prisma.JsonValue,
-  ): (referencia: string) => unknown {
+  ): (referencia: string, baseDadoId?: number) => unknown {
     const record = this.toRecord(dados);
     return (referencia: string) => record[referencia];
   }
@@ -473,13 +473,13 @@ export class CampanhaExecucaoService {
   private montaAccessorView(
     query: QueryView,
     row?: ViewRowCampanha,
-  ): (referencia: string) => unknown {
-    return (referencia: string) => {
+  ): (referencia: string, baseDadoId?: number) => unknown {
+    return (referencia: string, baseDadoId?: number) => {
       if (!row) {
         return undefined;
       }
 
-      const alias = this.resolveViewAlias(query, referencia);
+      const alias = this.resolveViewAlias(query, referencia, baseDadoId);
       return alias ? row[alias] : undefined;
     };
   }
@@ -494,14 +494,16 @@ export class CampanhaExecucaoService {
 
   private resolveParametros(
     vars: CampanhaVars,
-    accessor: (referencia: string) => unknown,
+    accessor: (referencia: string, baseDadoId?: number) => unknown,
   ): string[] {
     return Object.values(vars).map((value) => {
-      if (value.startsWith(CAMPO_REFERENCIA_PREFIX)) {
-        return this.toStringOrEmpty(accessor(this.getReferencia(value)));
+      if (value.nomeCampo.startsWith(CAMPO_REFERENCIA_PREFIX)) {
+        return this.toStringOrEmpty(
+          accessor(this.getReferencia(value.nomeCampo), value.baseDadoId),
+        );
       }
 
-      return value;
+      return value.nomeCampo;
     });
   }
 
@@ -521,7 +523,16 @@ export class CampanhaExecucaoService {
   private resolveViewAlias(
     query: QueryView,
     referencia: string,
+    baseDadoId?: number,
   ): string | null {
+    if (baseDadoId !== undefined) {
+      const select = query.select?.find(
+        (item) => item.baseDadosId === baseDadoId,
+      );
+
+      return select ? this.resolveViewAliasNoSelect(select, referencia) : null;
+    }
+
     for (const select of query.select ?? []) {
       const alias = this.resolveViewAliasNoSelect(select, referencia);
 
@@ -565,9 +576,18 @@ export class CampanhaExecucaoService {
       return false;
     }
 
-    return Object.values(value as Record<string, unknown>).every(
-      (item) => typeof item === 'string',
-    );
+    return Object.values(value as Record<string, unknown>).every((item) => {
+      if (typeof item !== 'object' || item === null || Array.isArray(item)) {
+        return false;
+      }
+
+      const record = item as Record<string, unknown>;
+      return (
+        typeof record.nomeCampo === 'string' &&
+        (record.baseDadoId === undefined ||
+          typeof record.baseDadoId === 'number')
+      );
+    });
   }
 
   private toEstrutura(value: Prisma.JsonValue): BaseDadosEstruturaDto[] {

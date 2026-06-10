@@ -119,6 +119,7 @@ export class ViewService {
       if (Array.isArray(query.select) && query.select.length > 0) {
         const camposSelecionados = query.select.flatMap((select) =>
           select.campos.map((campo) => ({
+            baseDadoId: select.baseDadosId,
             campo: campo.campo,
             rotulo: campo.rotulo,
           })),

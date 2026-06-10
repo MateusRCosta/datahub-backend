@@ -152,11 +152,10 @@ CREATE TABLE "campanhas" (
     "nome" VARCHAR(100) NOT NULL,
     "status" VARCHAR(25) NOT NULL DEFAULT 'pendente',
     "vars" JSONB NOT NULL,
-    "contatoCampo" VARCHAR(120) NOT NULL,
+    "contatoCampo" JSONB NOT NULL,
     "createdAt" TIMESTAMPTZ NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "updatedAt" TIMESTAMPTZ,
     "deletedAt" TIMESTAMPTZ,
-    "lockedAt" TIMESTAMPTZ,
     "scheduledAt" TIMESTAMPTZ NOT NULL,
     "executedAt" TIMESTAMPTZ,
     "finishedAt" TIMESTAMPTZ,
@@ -198,9 +197,6 @@ CREATE UNIQUE INDEX "sessoes_sid_key" ON "sessoes"("sid");
 
 -- CreateIndex
 CREATE INDEX "campanhas_status_scheduledAt_deletedAt_idx" ON "campanhas"("status", "scheduledAt", "deletedAt");
-
--- CreateIndex
-CREATE INDEX "campanhas_lockedAt_idx" ON "campanhas"("lockedAt");
 
 -- CreateIndex
 CREATE INDEX "clientesCampanhas_campanhaId_status_idx" ON "clientesCampanhas"("campanhaId", "status");

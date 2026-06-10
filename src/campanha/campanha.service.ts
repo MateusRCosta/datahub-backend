@@ -27,7 +27,6 @@ import {
   CampanhaFindAll,
   CampanhaFindById,
   CampanhaVars,
-  Campo,
   STATUS_CAMPANHA,
 } from './types/campanha.type';
 import { ClienteCampanhaService } from './cliente-campanha.service';
@@ -35,6 +34,7 @@ import { TemplateService } from 'src/template/template.service';
 import { ViewService } from 'src/view/view.service';
 import { paginate } from 'src/common/utils/paginated-response';
 import { BaseDadosService } from 'src/base-dados/base-dados.service';
+import { Campo } from 'src/common/types/dados.types';
 
 @Injectable()
 export class CampanhaService {
@@ -192,6 +192,7 @@ export class CampanhaService {
       if (Array.isArray(query.select) && query.select.length > 0) {
         const camposSelecionados = query.select.flatMap((select) =>
           select.campos.map((campo) => ({
+            baseDadoId: select.baseDadosId,
             campo: campo.campo,
             rotulo: campo.rotulo,
           })),
@@ -428,9 +429,7 @@ export class CampanhaService {
   ): Promise<void> {
     const referencias = [
       contatoCampo,
-      ...Object.values(vars)
-        .filter((value) => value.startsWith(CAMPO_REFERENCIA_PREFIX))
-        .map((value) => this.getReferencia(value)),
+      ...this.extraiReferenciasVars(vars).map((item) => item.referencia),
     ];
 
     if (baseDeDadoId !== undefined && baseDeDadoId !== null) {
@@ -438,13 +437,15 @@ export class CampanhaService {
         throw new BadRequestException('Base nao encontrada');
 
       for (const referencia of referencias) {
-        estrutura.map((est) => {
-          if (est.rotulo === referencia || est.cabecalho === referencia) {
-            throw new BadRequestException(
-              `Campo "${referencia}" nao existe na base`,
-            );
-          }
-        });
+        const campoExiste = estrutura.some(
+          (est) => est.rotulo === referencia || est.cabecalho === referencia,
+        );
+
+        if (!campoExiste) {
+          throw new BadRequestException(
+            `Campo "${referencia}" nao existe na base`,
+          );
+        }
       }
       return;
     }
@@ -453,10 +454,21 @@ export class CampanhaService {
       const query = await this.viewService.buscaConfigPorId(viewId);
       if (!query) throw new BadRequestException('View nao encontrada');
 
-      for (const referencia of referencias) {
-        if (!this.resolveViewAlias(query as QueryView, referencia)) {
+      const referenciasView = [
+        { referencia: contatoCampo, baseDadoId: undefined },
+        ...this.extraiReferenciasVars(vars),
+      ];
+
+      for (const referencia of referenciasView) {
+        if (
+          !this.resolveViewAlias(
+            query as QueryView,
+            referencia.referencia,
+            referencia.baseDadoId,
+          )
+        ) {
           throw new BadRequestException(
-            `Campo "${referencia}" nao existe na view`,
+            `Campo "${referencia.referencia}" nao existe na view`,
           );
         }
       }
@@ -497,13 +509,13 @@ export class CampanhaService {
 
   private validaVars(vars: CampanhaVars): void {
     if (!this.isStringRecord(vars)) {
-      throw new BadRequestException('vars deve conter apenas valores string');
+      throw new BadRequestException('vars deve conter objetos validos');
     }
 
     for (const value of Object.values(vars)) {
       if (
-        value.startsWith(CAMPO_REFERENCIA_PREFIX) &&
-        this.getReferencia(value) === ''
+        value.nomeCampo.startsWith(CAMPO_REFERENCIA_PREFIX) &&
+        this.getReferencia(value.nomeCampo) === ''
       ) {
         throw new BadRequestException('Referencia de vars invalida');
       }
@@ -544,7 +556,16 @@ export class CampanhaService {
   private resolveViewAlias(
     query: QueryView,
     referencia: string,
+    baseDadoId?: number,
   ): string | null {
+    if (baseDadoId !== undefined) {
+      const select = query.select?.find(
+        (item) => item.baseDadosId === baseDadoId,
+      );
+
+      return select ? this.resolveViewAliasNoSelect(select, referencia) : null;
+    }
+
     for (const select of query.select ?? []) {
       const alias = this.resolveViewAliasNoSelect(select, referencia);
 
@@ -588,8 +609,28 @@ export class CampanhaService {
       return false;
     }
 
-    return Object.values(value as Record<string, unknown>).every(
-      (item) => typeof item === 'string',
-    );
+    return Object.values(value as Record<string, unknown>).every((item) => {
+      if (typeof item !== 'object' || item === null || Array.isArray(item)) {
+        return false;
+      }
+
+      const record = item as Record<string, unknown>;
+      return (
+        typeof record.nomeCampo === 'string' &&
+        (record.baseDadoId === undefined ||
+          typeof record.baseDadoId === 'number')
+      );
+    });
+  }
+
+  private extraiReferenciasVars(
+    vars: CampanhaVars,
+  ): Array<{ referencia: string; baseDadoId?: number }> {
+    return Object.values(vars)
+      .filter((value) => value.nomeCampo.startsWith(CAMPO_REFERENCIA_PREFIX))
+      .map((value) => ({
+        referencia: this.getReferencia(value.nomeCampo),
+        baseDadoId: value.baseDadoId,
+      }));
   }
 }

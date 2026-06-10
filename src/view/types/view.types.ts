@@ -1,4 +1,5 @@
 import { Prisma, Usuario } from '@prisma/client';
+import { Campo } from 'src/common/types/dados.types';
 
 export enum TIPO_JOIN {
   INNER = 'INNER',
@@ -49,6 +50,7 @@ export type Join = {
 
 export type Select = {
   joinIndex: number; // 0 = root FROM, 1+ = join
+  baseDadosId: number;
   campos: {
     campo: string;
     rotulo: string;
@@ -89,4 +91,8 @@ export type ViewDetails = ViewListItem & {
 
 export type ViewRowWithClienteId = Record<string, unknown> & {
   readonly _clienteId: number;
+};
+
+export type CampoView = Campo & {
+  baseDadoId: number;
 };

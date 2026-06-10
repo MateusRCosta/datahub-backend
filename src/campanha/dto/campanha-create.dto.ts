@@ -8,6 +8,7 @@ import {
   MaxLength,
 } from 'class-validator';
 import type { CampanhaVars } from '../types/campanha.type';
+import { CampanhaContatoCampoDto } from './campanha-contato-campo.dto';
 
 export class CampanhaCreateDto {
   @IsString()
@@ -34,7 +35,7 @@ export class CampanhaCreateDto {
 
   @IsString()
   @MaxLength(120)
-  readonly contatoCampo!: string;
+  readonly contatoCampo!: CampanhaContatoCampoDto;
 
   @IsObject()
   readonly vars!: CampanhaVars;

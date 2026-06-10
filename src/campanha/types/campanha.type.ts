@@ -6,6 +6,7 @@ import {
   Usuario,
   View,
 } from '@prisma/client';
+import { Campo } from 'src/common/types/dados.types';
 
 export enum STATUS_CAMPANHA {
   ENVIADA = 'enviada',
@@ -15,7 +16,12 @@ export enum STATUS_CAMPANHA {
   PENDENTE = 'pendente',
 }
 
-export type CampanhaVars = Record<string, string>;
+export type vars = {
+  nomeCampo: string;
+  baseDadoId?: number;
+};
+
+export type CampanhaVars = Record<string, vars>;
 
 export type CampanhaFindAll = Pick<
   Campanha,
@@ -73,8 +79,3 @@ export type SourceConfig =
       readonly tipo: 'view';
       readonly viewId: number;
     };
-
-export type Campo = {
-  campo: string;
-  rotulo?: string | null;
-};
