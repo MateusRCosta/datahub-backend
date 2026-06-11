@@ -103,7 +103,7 @@ export class CampanhaExecucaoService {
     const vars = campanha.vars as CampanhaVars[];
     const sourceConfig = await this.carregaSourceConfig(
       campanha.viewId,
-      campanha.baseDeDadoId,
+      campanha.baseDeDadosId,
     );
 
     console.log('[CampanhaJobService] Origem da campanha carregada', {
@@ -247,7 +247,7 @@ export class CampanhaExecucaoService {
       select: {
         id: true,
         viewId: true,
-        baseDeDadoId: true,
+        baseDeDadosId: true,
       },
     });
 
@@ -255,15 +255,15 @@ export class CampanhaExecucaoService {
       throw new NotFoundException('Campanha nao encontrada');
     }
 
-    if (campanha.baseDeDadoId !== null) {
+    if (campanha.baseDeDadosId !== null) {
       console.log(
         '[CampanhaJobService] Populando clientes pela base de dados',
         {
           campanhaId,
-          baseDeDadoId: campanha.baseDeDadoId,
+          baseDeDadosId: campanha.baseDeDadosId,
         },
       );
-      await this.populaClientesDaBase(campanha.id, campanha.baseDeDadoId);
+      await this.populaClientesDaBase(campanha.id, campanha.baseDeDadosId);
       return;
     }
 
@@ -281,13 +281,13 @@ export class CampanhaExecucaoService {
 
   private async populaClientesDaBase(
     campanhaId: number,
-    baseDeDadoId: number,
+    baseDeDadosId: number,
   ): Promise<void> {
     let skip = 0;
 
     while (true) {
       const clientes = await this.clientesService.buscaIdsPorBase(
-        baseDeDadoId,
+        baseDeDadosId,
         skip,
         POPULA_CLIENTES_CAMPANHA_BATCH_SIZE,
       );
@@ -295,7 +295,7 @@ export class CampanhaExecucaoService {
       if (clientes.length === 0) {
         console.log('[CampanhaJobService] Fim da populacao pela base', {
           campanhaId,
-          baseDeDadoId,
+          baseDeDadosId,
           skip,
         });
         return;
@@ -307,7 +307,7 @@ export class CampanhaExecucaoService {
       );
       console.log('[CampanhaJobService] Clientes da base adicionados', {
         campanhaId,
-        baseDeDadoId,
+        baseDeDadosId,
         totalClientes: clientes.length,
       });
       skip += clientes.length;
@@ -397,7 +397,7 @@ export class CampanhaExecucaoService {
         vars: true,
         contatoCampo: true,
         viewId: true,
-        baseDeDadoId: true,
+        baseDeDadosId: true,
         template: {
           select: {
             id: true,
@@ -438,11 +438,11 @@ export class CampanhaExecucaoService {
 
   private async carregaSourceConfig(
     viewId: number | null,
-    baseDeDadoId: number | null,
+    baseDeDadosId: number | null,
   ): Promise<SourceConfig> {
-    if (baseDeDadoId !== null) {
+    if (baseDeDadosId !== null) {
       const base =
-        await this.baseDadosService.retornaEstruturaPorId(baseDeDadoId);
+        await this.baseDadosService.retornaEstruturaPorId(baseDeDadosId);
 
       if (!base) throw new NotFoundException('Base de dados nao encontrada');
 

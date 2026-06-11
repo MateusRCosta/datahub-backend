@@ -5,7 +5,7 @@ export const campanhaFilterConfig: Record<string, PrismaFilterFieldConfig> = {
   nome: { type: 'string' },
   templateId: { type: 'number' },
   viewId: { type: 'number' },
-  baseDeDadoId: { type: 'number' },
+  baseDeDadosId: { type: 'number' },
   usuarioId: { type: 'number' },
 };
 

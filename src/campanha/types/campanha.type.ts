@@ -59,7 +59,13 @@ export type CampanhaFindById = CampanhaFindAll &
 
 export type CampanhaExecucao = Pick<
   Campanha,
-  'id' | 'nome' | 'status' | 'vars' | 'contatoCampo' | 'viewId' | 'baseDeDadoId'
+  | 'id'
+  | 'nome'
+  | 'status'
+  | 'vars'
+  | 'contatoCampo'
+  | 'viewId'
+  | 'baseDeDadosId'
 > & {
   readonly template: Pick<Template, 'config' | 'id'> & {
     readonly integracaoCampanha: Pick<

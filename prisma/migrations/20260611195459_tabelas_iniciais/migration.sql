@@ -161,7 +161,7 @@ CREATE TABLE "campanhas" (
     "finishedAt" TIMESTAMPTZ,
     "usuarioId" INTEGER NOT NULL,
     "viewId" INTEGER,
-    "baseDeDadoId" INTEGER,
+    "baseDeDadosId" INTEGER,
     "templateId" INTEGER NOT NULL,
 
     CONSTRAINT "campanhas_pkey" PRIMARY KEY ("id")
@@ -247,7 +247,7 @@ ALTER TABLE "campanhas" ADD CONSTRAINT "campanhas_usuarioId_fkey" FOREIGN KEY ("
 ALTER TABLE "campanhas" ADD CONSTRAINT "campanhas_viewId_fkey" FOREIGN KEY ("viewId") REFERENCES "views"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
-ALTER TABLE "campanhas" ADD CONSTRAINT "campanhas_baseDeDadoId_fkey" FOREIGN KEY ("baseDeDadoId") REFERENCES "basesDeDados"("id") ON DELETE SET NULL ON UPDATE CASCADE;
+ALTER TABLE "campanhas" ADD CONSTRAINT "campanhas_baseDeDadosId_fkey" FOREIGN KEY ("baseDeDadosId") REFERENCES "basesDeDados"("id") ON DELETE SET NULL ON UPDATE CASCADE;
 
 -- AddForeignKey
 ALTER TABLE "campanhas" ADD CONSTRAINT "campanhas_templateId_fkey" FOREIGN KEY ("templateId") REFERENCES "templates"("id") ON DELETE RESTRICT ON UPDATE CASCADE;

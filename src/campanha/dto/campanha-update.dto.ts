@@ -9,7 +9,7 @@ import {
 import { CampanhaVarsDto } from './campanha-contato-vars.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIdValid } from 'src/common/decorators/is-id-value.decorator';
-import { IsNameField } from 'src/common/decorators/is-NAME-field-value.decorator';
+import { IsNameField } from 'src/common/decorators/is-name-field-value.decorator';
 
 export class CampanhaUpdateDto {
   @IsOptional()

@@ -213,8 +213,8 @@ model Campanha {
   view   View? @relation(fields: [viewId], references: [id])
   viewId Int?  @db.Integer
 
-  baseDeDados  BaseDeDados? @relation(fields: [baseDeDadoId], references: [id])
-  baseDeDadoId Int?         @db.Integer
+  baseDeDados  BaseDeDados? @relation(fields: [baseDeDadosId], references: [id])
+  baseDeDadosId Int?         @db.Integer
 
   template   Template @relation(fields: [templateId], references: [id])
   templateId Int      @db.Integer

@@ -56,7 +56,7 @@ export class CampanhaService {
         nome: query.nome,
         templateId: query.templateId,
         viewId: query.viewId,
-        baseDeDadoId: query.baseDeDadoId,
+        baseDeDadosId: query.baseDeDadosId,
         usuarioId: query.usuarioId,
       },
       campanhaFilterConfig,
@@ -231,7 +231,7 @@ export class CampanhaService {
         templateId: dto.templateId,
         viewId: dto.viewId,
         status: STATUS_CAMPANHA.PENDENTE,
-        baseDeDadoId: dto.baseDadosId,
+        baseDeDadosId: dto.baseDadosId,
         contatoCampo: dto.contatoCampo as unknown as Prisma.InputJsonValue,
         vars: dto.vars as unknown as Prisma.InputJsonValue,
         usuarioId,
@@ -260,7 +260,7 @@ export class CampanhaService {
         status: true,
         templateId: true,
         viewId: true,
-        baseDeDadoId: true,
+        baseDeDadosId: true,
         contatoCampo: true,
         vars: true,
       },
@@ -283,7 +283,7 @@ export class CampanhaService {
     const baseDadosId =
       dto.baseDadosId !== undefined
         ? dto.baseDadosId
-        : campanhaAtual.baseDeDadoId;
+        : campanhaAtual.baseDeDadosId;
     const contatoCampo =
       dto.contatoCampo ?? (campanhaAtual.contatoCampo as CampanhaVars);
     const vars = dto.vars ?? (campanhaAtual.vars as CampanhaVars[]);
@@ -299,7 +299,7 @@ export class CampanhaService {
         scheduledAt: dto.scheduledAt,
         templateId: dto.templateId,
         viewId,
-        baseDadosId,
+        baseDeDadosId: baseDadosId,
         contatoCampo: dto.contatoCampo as unknown as Prisma.InputJsonValue,
         vars:
           dto.vars !== undefined
@@ -417,10 +417,10 @@ export class CampanhaService {
   }
 
   private async buscaEstrutura(
-    baseDeDadoId: number,
+    baseDeDadosId: number,
   ): Promise<BaseDadosEstruturaDto[]> {
     const base =
-      await this.baseDadosService.retornaEstruturaPorId(baseDeDadoId);
+      await this.baseDadosService.retornaEstruturaPorId(baseDeDadosId);
 
     if (!base) {
       throw new NotFoundException('Base de dados nao encontrada');
