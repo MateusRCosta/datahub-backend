@@ -10,6 +10,7 @@ import { CampanhaService } from './campanha.service';
 import { ClienteCampanhaService } from './cliente-campanha.service';
 import { TemplateModule } from 'src/template/template.module';
 import { BaseDadosModule } from 'src/base-dados/base-dados.module';
+import { BaseDadosService } from 'src/base-dados/base-dados.service';
 
 @Module({
   imports: [
@@ -23,6 +24,7 @@ import { BaseDadosModule } from 'src/base-dados/base-dados.module';
   providers: [
     CampanhaService,
     ClienteCampanhaService,
+    BaseDadosService,
     CampanhaExecucaoService,
     CampanhaSchedulerService,
     PrismaService,
