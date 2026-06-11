@@ -11,18 +11,14 @@ import {
   buildPrismaWhere,
 } from 'src/common/utils/prisma-filter-parser';
 import { PrismaService } from 'src/config/prisma.service';
-import { QueryView, Select } from 'src/view/types/view.types';
-import {
-  CAMPO_REFERENCIA_PREFIX,
-  TRANSICOES_STATUS_CAMPANHA,
-} from './constants';
+import { QueryView } from 'src/view/types/view.types';
+import { TRANSICOES_STATUS_CAMPANHA } from './constants';
 import {
   campanhaFilterConfig,
   campanhaOrderByFields,
 } from './campanha.filter-config';
 import { CampanhaCreateDto } from './dto/campanha-create.dto';
 import { CampanhaFindAllQueryDto } from './dto/campanha-find-all-query.dto';
-import { CampanhaUpdateDto } from './dto/campanha-update.dto';
 import {
   CampanhaFindAll,
   CampanhaFindById,
@@ -35,6 +31,7 @@ import { ViewService } from 'src/view/view.service';
 import { paginate } from 'src/common/utils/paginated-response';
 import { BaseDadosService } from 'src/base-dados/base-dados.service';
 import { Campo } from 'src/common/types/dados.types';
+import { CampanhaUpdateDto } from './dto/campanha-update.dto';
 
 @Injectable()
 export class CampanhaService {
@@ -207,9 +204,6 @@ export class CampanhaService {
     dto: CampanhaCreateDto,
     usuarioId: number,
   ): Promise<{ id: number }> {
-    this.validaScheduledAt(dto.scheduledAt);
-    this.validaCampoReferencia(dto.contatoCampo, 'contatoCampo');
-    this.validaVars(dto.vars);
     if (
       dto.baseDadosId !== null &&
       dto.baseDadosId !== undefined &&
@@ -221,26 +215,13 @@ export class CampanhaService {
 
     await this.validaQuantidadeVarsTemplate(dto.templateId, dto.vars);
 
-    let estrutura: BaseDadosEstruturaDto[] = [];
-    let contatoCampo: string;
-    if (dto.baseDadosId) {
-      estrutura = await this.buscaEstrutura(dto.baseDadosId);
-      contatoCampo =
-        estrutura.find(
-          (est) =>
-            est.cabecalho === dto.contatoCampo ||
-            est.rotulo === dto.contatoCampo,
-        )?.cabecalho || '';
-    } else {
-      contatoCampo = dto.contatoCampo;
-    }
+    const contatoCampo = dto.contatoCampo;
 
     await this.validaFonteECampos(
-      dto.viewId,
-      dto.baseDadosId,
       contatoCampo,
       dto.vars,
-      estrutura,
+      dto.viewId,
+      dto.baseDadosId,
     );
 
     return this.prismaService.campanha.create({
@@ -251,7 +232,7 @@ export class CampanhaService {
         viewId: dto.viewId,
         status: STATUS_CAMPANHA.PENDENTE,
         baseDeDadoId: dto.baseDadosId,
-        contatoCampo: dto.contatoCampo,
+        contatoCampo: dto.contatoCampo as unknown as Prisma.InputJsonValue,
         vars: dto.vars as unknown as Prisma.InputJsonValue,
         usuarioId,
       },
@@ -297,50 +278,19 @@ export class CampanhaService {
       );
     }
 
-    if (dto.scheduledAt !== undefined) {
-      this.validaScheduledAt(dto.scheduledAt);
-    }
-
     const templateId = dto.templateId ?? campanhaAtual.templateId;
     const viewId = dto.viewId !== undefined ? dto.viewId : campanhaAtual.viewId;
-    const baseDeDadoId =
+    const baseDadosId =
       dto.baseDadosId !== undefined
         ? dto.baseDadosId
         : campanhaAtual.baseDeDadoId;
-    let contatoCampo = dto.contatoCampo ?? String(campanhaAtual.contatoCampo);
-    const vars = dto.vars ?? this.toCampanhaVars(campanhaAtual.vars);
-
-    this.validaCampoReferencia(contatoCampo, 'contatoCampo');
-    this.validaVars(vars);
-
-    if (
-      baseDeDadoId !== null &&
-      baseDeDadoId !== undefined &&
-      viewId !== null &&
-      viewId !== undefined
-    ) {
-      throw new BadRequestException('Informe ou uma base ou uma view');
-    }
+    const contatoCampo =
+      dto.contatoCampo ?? (campanhaAtual.contatoCampo as CampanhaVars);
+    const vars = dto.vars ?? (campanhaAtual.vars as CampanhaVars[]);
 
     await this.validaQuantidadeVarsTemplate(templateId, vars);
 
-    let estrutura: BaseDadosEstruturaDto[] = [];
-    if (baseDeDadoId) {
-      estrutura = await this.buscaEstrutura(baseDeDadoId);
-      contatoCampo =
-        estrutura.find(
-          (est) =>
-            est.cabecalho === contatoCampo || est.rotulo === contatoCampo,
-        )?.cabecalho || '';
-    }
-
-    await this.validaFonteECampos(
-      viewId,
-      baseDeDadoId,
-      contatoCampo,
-      vars,
-      estrutura,
-    );
+    await this.validaFonteECampos(contatoCampo, vars, viewId, baseDadosId);
 
     const result = await this.prismaService.campanha.updateMany({
       where: { id, deletedAt: null, status: STATUS_CAMPANHA.PENDENTE },
@@ -349,8 +299,8 @@ export class CampanhaService {
         scheduledAt: dto.scheduledAt,
         templateId: dto.templateId,
         viewId,
-        baseDeDadoId,
-        contatoCampo: dto.contatoCampo,
+        baseDadosId,
+        contatoCampo: dto.contatoCampo as unknown as Prisma.InputJsonValue,
         vars:
           dto.vars !== undefined
             ? (dto.vars as unknown as Prisma.InputJsonValue)
@@ -359,9 +309,8 @@ export class CampanhaService {
       },
     });
 
-    if (result.count === 0) {
+    if (result.count === 0)
       throw new NotFoundException('Campanha nao encontrada');
-    }
 
     return { id };
   }
@@ -401,7 +350,14 @@ export class CampanhaService {
       throw new NotFoundException('Campanha nao encontrada');
     }
 
-    this.validaTransicaoStatus(campanha.status as STATUS_CAMPANHA, novoStatus);
+    const permitidas =
+      TRANSICOES_STATUS_CAMPANHA.get(campanha.status as STATUS_CAMPANHA) ?? [];
+
+    if (!permitidas.includes(novoStatus)) {
+      throw new BadRequestException(
+        `Transicao de status invalida: ${campanha.status} para ${novoStatus}`,
+      );
+    }
 
     await this.prismaService.campanha.update({
       where: { id },
@@ -421,29 +377,25 @@ export class CampanhaService {
   }
 
   private async validaFonteECampos(
-    viewId: number | null | undefined,
-    baseDeDadoId: number | null | undefined,
-    contatoCampo: string,
-    vars: CampanhaVars,
-    estrutura?: BaseDadosEstruturaDto[],
+    contatoCampo: CampanhaVars,
+    vars: CampanhaVars[],
+    viewId?: number | null,
+    baseDadosId?: number | null,
   ): Promise<void> {
-    const referencias = [
-      contatoCampo,
-      ...this.extraiReferenciasVars(vars).map((item) => item.referencia),
-    ];
-
-    if (baseDeDadoId !== undefined && baseDeDadoId !== null) {
+    const varsCompleto = [contatoCampo, ...vars];
+    if (baseDadosId !== undefined && baseDadosId !== null) {
+      const estrutura = await this.buscaEstrutura(baseDadosId);
       if (!estrutura || estrutura.length === 0)
         throw new BadRequestException('Base nao encontrada');
 
-      for (const referencia of referencias) {
+      for (const v of varsCompleto) {
         const campoExiste = estrutura.some(
-          (est) => est.rotulo === referencia || est.cabecalho === referencia,
+          (est) => est.cabecalho === v.nomeCampo,
         );
 
         if (!campoExiste) {
           throw new BadRequestException(
-            `Campo "${referencia}" nao existe na base`,
+            `Campo "${v.nomeCampo}" nao existe na base`,
           );
         }
       }
@@ -454,21 +406,10 @@ export class CampanhaService {
       const query = await this.viewService.buscaConfigPorId(viewId);
       if (!query) throw new BadRequestException('View nao encontrada');
 
-      const referenciasView = [
-        { referencia: contatoCampo, baseDadoId: undefined },
-        ...this.extraiReferenciasVars(vars),
-      ];
-
-      for (const referencia of referenciasView) {
-        if (
-          !this.resolveViewAlias(
-            query as QueryView,
-            referencia.referencia,
-            referencia.baseDadoId,
-          )
-        ) {
+      for (const VView of varsCompleto) {
+        if (!this.resolveViewAlias(query, VView.nomeCampo, VView.baseDadoId)) {
           throw new BadRequestException(
-            `Campo "${referencia.referencia}" nao existe na view`,
+            `Campo "${VView.nomeCampo}" na base #${VView.baseDadoId} nao existe na view`,
           );
         }
       }
@@ -493,62 +434,20 @@ export class CampanhaService {
     }
     return estruturaTipada;
   }
-  private validaScheduledAt(scheduledAt: Date): void {
-    if (scheduledAt.getTime() < Date.now()) {
-      throw new BadRequestException(
-        'scheduledAt nao pode ser anterior a data atual',
-      );
-    }
-  }
-
-  private validaCampoReferencia(value: string, campo: string): void {
-    if (value.trim() === '') {
-      throw new BadRequestException(`${campo} nao deve ser nulo`);
-    }
-  }
-
-  private validaVars(vars: CampanhaVars): void {
-    if (!this.isStringRecord(vars)) {
-      throw new BadRequestException('vars deve conter objetos validos');
-    }
-
-    for (const value of Object.values(vars)) {
-      if (
-        value.nomeCampo.startsWith(CAMPO_REFERENCIA_PREFIX) &&
-        this.getReferencia(value.nomeCampo) === ''
-      ) {
-        throw new BadRequestException('Referencia de vars invalida');
-      }
-    }
-  }
 
   private async validaQuantidadeVarsTemplate(
     templateId: number,
-    vars: CampanhaVars,
+    vars: CampanhaVars[],
   ): Promise<void> {
     const quantidadeVars =
       await this.templateService.retornaQtdVarsPorId(templateId);
 
-    if (quantidadeVars === undefined) {
+    if (quantidadeVars === undefined)
       throw new BadRequestException('O template informado nao foi encontrado');
-    }
 
     if (Object.keys(vars).length > quantidadeVars) {
       throw new BadRequestException(
         'A qtd de vars e maior do que o permitido pelo template',
-      );
-    }
-  }
-
-  private validaTransicaoStatus(
-    statusAtual: STATUS_CAMPANHA,
-    novoStatus: STATUS_CAMPANHA,
-  ): void {
-    const permitidas = TRANSICOES_STATUS_CAMPANHA.get(statusAtual) ?? [];
-
-    if (!permitidas.includes(novoStatus)) {
-      throw new BadRequestException(
-        `Transicao de status invalida: ${statusAtual} para ${novoStatus}`,
       );
     }
   }
@@ -563,74 +462,15 @@ export class CampanhaService {
         (item) => item.baseDadosId === baseDadoId,
       );
 
-      return select ? this.resolveViewAliasNoSelect(select, referencia) : null;
-    }
+      if (!select) return null;
 
-    for (const select of query.select ?? []) {
-      const alias = this.resolveViewAliasNoSelect(select, referencia);
+      const campo = select.campos.find((item) => item.campo === referencia);
 
-      if (alias) {
-        return alias;
-      }
+      if (!campo) return null;
+
+      return `b${select.baseDadosId}-${campo.rotulo}`;
     }
 
     return null;
-  }
-
-  private resolveViewAliasNoSelect(
-    select: Select,
-    referencia: string,
-  ): string | null {
-    const campo = select.campos.find(
-      (item) => item.rotulo === referencia || item.campo === referencia,
-    );
-
-    if (!campo) {
-      return null;
-    }
-
-    return `b${select.joinIndex}-${campo.rotulo}`;
-  }
-
-  private getReferencia(value: string): string {
-    return value.slice(1).trim();
-  }
-
-  private toCampanhaVars(value: Prisma.JsonValue): CampanhaVars {
-    if (!this.isStringRecord(value)) {
-      throw new BadRequestException('vars da campanha esta invalido');
-    }
-
-    return value;
-  }
-
-  private isStringRecord(value: unknown): value is CampanhaVars {
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-      return false;
-    }
-
-    return Object.values(value as Record<string, unknown>).every((item) => {
-      if (typeof item !== 'object' || item === null || Array.isArray(item)) {
-        return false;
-      }
-
-      const record = item as Record<string, unknown>;
-      return (
-        typeof record.nomeCampo === 'string' &&
-        (record.baseDadoId === undefined ||
-          typeof record.baseDadoId === 'number')
-      );
-    });
-  }
-
-  private extraiReferenciasVars(
-    vars: CampanhaVars,
-  ): Array<{ referencia: string; baseDadoId?: number }> {
-    return Object.values(vars)
-      .filter((value) => value.nomeCampo.startsWith(CAMPO_REFERENCIA_PREFIX))
-      .map((value) => ({
-        referencia: this.getReferencia(value.nomeCampo),
-        baseDadoId: value.baseDadoId,
-      }));
   }
 }

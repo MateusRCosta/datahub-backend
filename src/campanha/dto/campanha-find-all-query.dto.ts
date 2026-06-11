@@ -1,23 +1,16 @@
-import { Type } from 'class-transformer';
-import {
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  MaxLength,
-} from 'class-validator';
+import { IsEnum, IsOptional } from 'class-validator';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { STATUS_CAMPANHA } from '../types/campanha.type';
+import { IsNameField } from 'src/common/decorators/is-NAME-field-value.decorator';
+import { IsIdValid } from 'src/common/decorators/is-id-value.decorator';
 
 export class CampanhaFindAllQueryDto extends PaginationQueryDto {
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
+  @IsIdValid()
   readonly id?: number;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(100)
+  @IsNameField(100, 'Campanha de inverno')
   readonly nome?: string;
 
   @IsOptional()
@@ -25,22 +18,18 @@ export class CampanhaFindAllQueryDto extends PaginationQueryDto {
   readonly status?: STATUS_CAMPANHA;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
+  @IsIdValid()
   readonly templateId?: number;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
+  @IsIdValid()
   readonly viewId?: number;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
+  @IsIdValid()
   readonly baseDeDadoId?: number;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
+  @IsIdValid()
   readonly usuarioId?: number;
 }

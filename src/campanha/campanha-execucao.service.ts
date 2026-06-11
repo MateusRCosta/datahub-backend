@@ -4,8 +4,6 @@ import {
   InternalServerErrorException,
   NotFoundException,
 } from '@nestjs/common';
-import { Prisma } from '@prisma/client';
-import { BaseDadosEstruturaDto } from 'src/base-dados/dto/base-dados-estrutura.dto';
 import { ClientesService } from 'src/cliente/cliente.service';
 import { PrismaService } from 'src/config/prisma.service';
 import { IntegracaoCampanhaService } from 'src/integracao-campanha/integracao-campanha.service';
@@ -31,11 +29,14 @@ import {
 import { ViewRowCampanha } from './types/campanha-job.type';
 import { Mensagem } from 'src/integracao-campanha/types/execucao.type';
 import { UpchatConfigTemplate } from 'src/template/types/template-upchat.types';
+import { BaseDadosService } from 'src/base-dados/base-dados.service';
+import { BaseDadosEstruturaDto } from 'src/base-dados/dto/base-dados-estrutura.dto';
 
 @Injectable()
 export class CampanhaExecucaoService {
   constructor(
     private readonly prismaService: PrismaService,
+    private readonly baseDadosService: BaseDadosService,
     private readonly integracaoCampanhaService: IntegracaoCampanhaService,
     private readonly viewService: ViewService,
     private readonly clientesService: ClientesService,
@@ -99,43 +100,50 @@ export class CampanhaExecucaoService {
       totalPendentes: pendentes.length,
     });
 
-    const vars = this.toCampanhaVars(campanha.vars);
+    const vars = campanha.vars as CampanhaVars[];
     const sourceConfig = await this.carregaSourceConfig(
       campanha.viewId,
       campanha.baseDeDadoId,
     );
+
     console.log('[CampanhaJobService] Origem da campanha carregada', {
       campanhaId: campanha.id,
       tipo: sourceConfig.tipo,
     });
 
-    const viewQuery =
-      sourceConfig.tipo === 'view'
-        ? await this.buscaQueryView(sourceConfig.viewId)
-        : null;
-    const viewRows =
-      sourceConfig.tipo === 'view'
-        ? await this.buscaViewRowsPorClientes(
-            sourceConfig.viewId,
-            pendentes.map((item) => item.clienteId),
-          )
-        : new Map<number, ViewRowCampanha>();
     const mensagens: Mensagem[] = [];
     const clienteCampanhaIds: number[] = [];
     const clienteCampanhaComErro: number[] = [];
 
-    for (const pendente of pendentes) {
-      const accessor =
-        sourceConfig.tipo === 'base'
-          ? this.montaAccessorBase(pendente.cliente.dados)
-          : this.montaAccessorView(
-              this.assertViewQuery(viewQuery),
-              viewRows.get(pendente.clienteId),
-            );
+    let viewRows: Map<number, ViewRowCampanha>;
+    let acessor: (referencia: string, baseDadoId?: number) => unknown;
 
+    for (const pendente of pendentes) {
+      if (sourceConfig.tipo === 'base') {
+        acessor = this.montaAcessor({
+          dados: pendente.cliente.dados as Record<
+            string,
+            string | number | boolean
+          >,
+        });
+      } else if (sourceConfig.tipo === 'view') {
+        viewRows = await this.buscaViewRowsPorClientes(
+          sourceConfig.viewId,
+          pendentes.map((item) => item.cliente.id),
+        );
+        acessor = this.montaAcessor({
+          query: sourceConfig.query,
+          row: viewRows.get(pendente.cliente.id),
+        });
+      } else {
+        throw new BadRequestException('Source config nao aceita');
+      }
+      const contato = campanha.contatoCampo as CampanhaVars;
       mensagens.push({
-        meio: this.toStringOrEmpty(accessor(campanha.contatoCampo)),
-        parametros: this.resolveParametros(vars, accessor),
+        meio: this.toStringOrEmpty(
+          acessor(contato.nomeCampo, contato.baseDadoId),
+        ),
+        parametros: this.resolveParametros(vars, acessor),
       });
       clienteCampanhaIds.push(pendente.id);
     }
@@ -433,29 +441,26 @@ export class CampanhaExecucaoService {
     baseDeDadoId: number | null,
   ): Promise<SourceConfig> {
     if (baseDeDadoId !== null) {
-      const base = await this.prismaService.baseDeDados.findFirst({
-        where: { id: baseDeDadoId, deletedAt: null },
-        select: { estrutura: true },
-      });
+      const base =
+        await this.baseDadosService.retornaEstruturaPorId(baseDeDadoId);
 
-      if (!base) {
-        throw new NotFoundException('Base de dados nao encontrada');
-      }
+      if (!base) throw new NotFoundException('Base de dados nao encontrada');
+
+      const estrutura = base.estrutura as unknown as BaseDadosEstruturaDto[];
 
       return {
         tipo: 'base',
-        baseDeDadoId,
-        campos: new Set(
-          this.toEstrutura(base.estrutura).map(
-            (item) => item.rotulo || item.cabecalho,
-          ),
-        ),
+        estrutura: estrutura as unknown as BaseDadosEstruturaDto[],
+        campos: new Set(estrutura.map((est) => est.cabecalho)),
       };
     }
 
     if (viewId !== null) {
+      const query = await this.viewService.buscaConfigPorId(viewId);
+      if (query) throw new NotFoundException('View nao encontrada');
       return {
         tipo: 'view',
+        query: query as unknown as QueryView,
         viewId,
       };
     }
@@ -463,61 +468,44 @@ export class CampanhaExecucaoService {
     throw new BadRequestException('Campanha precisa ter view ou base de dados');
   }
 
-  private montaAccessorBase(
-    dados: Prisma.JsonValue,
-  ): (referencia: string, baseDadoId?: number) => unknown {
-    const record = this.toRecord(dados);
-    return (referencia: string) => record[referencia];
-  }
-
-  private montaAccessorView(
-    query: QueryView,
-    row?: ViewRowCampanha,
-  ): (referencia: string, baseDadoId?: number) => unknown {
-    return (referencia: string, baseDadoId?: number) => {
-      if (!row) {
-        return undefined;
-      }
-
-      const alias = this.resolveViewAlias(query, referencia, baseDadoId);
-      return alias ? row[alias] : undefined;
-    };
-  }
-
-  private assertViewQuery(query: QueryView | null): QueryView {
-    if (!query) {
-      throw new BadRequestException('View da campanha nao foi carregada');
+  montaAcessor({
+    dados,
+    query,
+    row,
+  }: {
+    dados?: Record<string, string | number | boolean>;
+    query?: QueryView;
+    row?: ViewRowCampanha;
+  }): (referencia: string, baseDadoId?: number) => unknown {
+    if (dados) {
+      return (referencia: string) => dados[referencia];
     }
+    if (query) {
+      return (referencia: string, baseDadoId?: number) => {
+        if (!row) {
+          return undefined;
+        }
 
-    return query;
+        const alias = this.resolveViewAlias(query, referencia, baseDadoId);
+        return alias ? row[alias] : undefined;
+      };
+    }
+    throw new BadRequestException('Configure um acessor');
   }
 
   private resolveParametros(
-    vars: CampanhaVars,
+    vars: CampanhaVars[],
     accessor: (referencia: string, baseDadoId?: number) => unknown,
   ): string[] {
-    return Object.values(vars).map((value) => {
-      if (value.nomeCampo.startsWith(CAMPO_REFERENCIA_PREFIX)) {
+    return vars.map((v) => {
+      if (v.nomeCampo.startsWith(CAMPO_REFERENCIA_PREFIX)) {
         return this.toStringOrEmpty(
-          accessor(this.getReferencia(value.nomeCampo), value.baseDadoId),
+          accessor(v.nomeCampo.slice(1).trim(), v.baseDadoId),
         );
       }
 
-      return value.nomeCampo;
+      return v.nomeCampo;
     });
-  }
-
-  private async buscaQueryView(viewId: number): Promise<QueryView> {
-    const view = await this.prismaService.view.findFirst({
-      where: { id: viewId, deletedAt: null },
-      select: { config: true },
-    });
-
-    if (!view) {
-      throw new NotFoundException('View nao encontrada');
-    }
-
-    return view.config as unknown as QueryView;
   }
 
   private resolveViewAlias(
@@ -557,53 +545,6 @@ export class CampanhaExecucaoService {
     }
 
     return `b${select.joinIndex}-${campo.rotulo}`;
-  }
-
-  private getReferencia(value: string): string {
-    return value.slice(1).trim();
-  }
-
-  private toCampanhaVars(value: Prisma.JsonValue): CampanhaVars {
-    if (!this.isStringRecord(value)) {
-      throw new BadRequestException('vars da campanha esta invalido');
-    }
-
-    return value;
-  }
-
-  private isStringRecord(value: unknown): value is CampanhaVars {
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-      return false;
-    }
-
-    return Object.values(value as Record<string, unknown>).every((item) => {
-      if (typeof item !== 'object' || item === null || Array.isArray(item)) {
-        return false;
-      }
-
-      const record = item as Record<string, unknown>;
-      return (
-        typeof record.nomeCampo === 'string' &&
-        (record.baseDadoId === undefined ||
-          typeof record.baseDadoId === 'number')
-      );
-    });
-  }
-
-  private toEstrutura(value: Prisma.JsonValue): BaseDadosEstruturaDto[] {
-    if (!Array.isArray(value)) {
-      return [];
-    }
-
-    return value as unknown as BaseDadosEstruturaDto[];
-  }
-
-  private toRecord(value: unknown): Record<string, unknown> {
-    if (typeof value !== 'object' || value === null || Array.isArray(value)) {
-      return {};
-    }
-
-    return value as Record<string, unknown>;
   }
 
   private toStringOrEmpty(value: unknown): string {

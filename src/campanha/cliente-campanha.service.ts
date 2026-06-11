@@ -84,7 +84,6 @@ export class ClienteCampanhaService {
       orderBy: { id: 'asc' },
       select: {
         id: true,
-        clienteId: true,
         cliente: {
           select: {
             id: true,

@@ -251,13 +251,13 @@ export class ViewService {
     );
   }
 
-  async buscaConfigPorId(id: number): Promise<unknown> {
+  async buscaConfigPorId(id: number): Promise<QueryView> {
     const view = await this.prismaService.view.findFirst({
       where: { id: id, deletedAt: null },
       select: { config: true },
     });
 
-    return view?.config;
+    return view?.config as QueryView;
   }
   private async executePaginated<T extends Record<string, unknown>>(
     id: number,

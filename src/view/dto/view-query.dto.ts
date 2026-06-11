@@ -8,6 +8,7 @@ import {
   IsOptional,
   IsString,
   Max,
+  MaxLength,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
@@ -18,18 +19,22 @@ import { MAX_JOINS } from '../constants';
 export class FromDto {
   @Type(() => Number)
   @IsInt()
+  @Max(1000000)
   readonly baseDadosId!: number;
 }
 
 export class JoinDto {
   @Type(() => Number)
   @IsInt()
+  @Max(1000000)
   readonly baseDadosIdJoin!: number;
 
   @IsString()
+  @MaxLength(100)
   readonly campoFrom!: string;
 
   @IsString()
+  @MaxLength(100)
   readonly campoJoin!: string;
 
   @IsEnum(TIPO_JOIN)
@@ -38,15 +43,18 @@ export class JoinDto {
 
 export class SelectCampoDto {
   @IsString()
+  @MaxLength(100)
   readonly campo!: string;
 
   @IsString()
+  @MaxLength(100)
   readonly rotulo!: string;
 }
 
 export class SelectDto {
   @Type(() => Number)
   @IsInt()
+  @Max(1000000)
   readonly baseDadosId!: number;
 
   @Type(() => Number)
@@ -62,13 +70,16 @@ export class SelectDto {
 export class FilterDto {
   @Type(() => Number)
   @IsInt()
+  @Max(1000000)
   readonly joinIndex!: number;
 
   @Type(() => Number)
   @IsInt()
+  @Max(1000000)
   readonly baseDadosId!: number;
 
   @IsString()
+  @MaxLength(100)
   readonly campo!: string;
 
   @IsEnum(OPERADOR)

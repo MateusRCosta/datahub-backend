@@ -1,42 +1,52 @@
 import { Type } from 'class-transformer';
 import {
-  IsDate,
-  IsInt,
+  IsArray,
+  IsNotEmptyObject,
   IsObject,
   IsOptional,
-  IsString,
-  MaxLength,
+  MinDate,
+  ValidateNested,
 } from 'class-validator';
-import type { CampanhaVars } from '../types/campanha.type';
-import { CampanhaContatoCampoDto } from './campanha-contato-campo.dto';
+import { CampanhaVarsDto } from './campanha-contato-vars.dto';
+import { ApiProperty } from '@nestjs/swagger';
+import { IsIdValid } from 'src/common/decorators/is-id-value.decorator';
+import { IsNameField } from 'src/common/decorators/is-NAME-field-value.decorator';
 
 export class CampanhaCreateDto {
-  @IsString()
-  @MaxLength(100)
+  @IsNameField(100, 'id')
   readonly nome!: string;
 
+  @ApiProperty({
+    type: 'string',
+    format: 'date',
+    example: new Date(1986, 11, 11),
+  })
   @Type(() => Date)
-  @IsDate()
+  @MinDate(() => new Date(), {
+    message: () =>
+      `data mínima pertimida para agendamento é ${new Date().toDateString()}`,
+  })
   readonly scheduledAt!: Date;
 
-  @Type(() => Number)
-  @IsInt()
+  @IsIdValid()
   readonly templateId!: number;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
+  @IsIdValid()
   readonly viewId?: number;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
+  @IsIdValid()
   readonly baseDadosId?: number;
 
-  @IsString()
-  @MaxLength(120)
-  readonly contatoCampo!: CampanhaContatoCampoDto;
-
+  @ValidateNested()
   @IsObject()
-  readonly vars!: CampanhaVars;
+  @IsNotEmptyObject()
+  @Type(() => CampanhaVarsDto)
+  readonly contatoCampo!: CampanhaVarsDto;
+
+  @ValidateNested({ each: true })
+  @IsArray()
+  @Type(() => CampanhaVarsDto)
+  readonly vars!: CampanhaVarsDto[];
 }

@@ -17,11 +17,6 @@ export type ClienteCampanhaFindAll = Pick<
   };
 };
 
-export type ClienteCampanhaPendente = Pick<
-  ClienteCampanha,
-  'id' | 'clienteId'
-> & {
-  readonly cliente: Pick<Cliente, 'id'> & {
-    readonly dados: Prisma.JsonValue;
-  };
+export type ClienteCampanhaPendente = Pick<ClienteCampanha, 'id'> & {
+  readonly cliente: Pick<Cliente, 'id' | 'dados'>;
 };

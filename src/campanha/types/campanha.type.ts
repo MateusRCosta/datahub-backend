@@ -6,7 +6,9 @@ import {
   Usuario,
   View,
 } from '@prisma/client';
+import { BaseDadosEstruturaDto } from 'src/base-dados/dto/base-dados-estrutura.dto';
 import { Campo } from 'src/common/types/dados.types';
+import { QueryView } from 'src/view/types/view.types';
 
 export enum STATUS_CAMPANHA {
   ENVIADA = 'enviada',
@@ -16,12 +18,10 @@ export enum STATUS_CAMPANHA {
   PENDENTE = 'pendente',
 }
 
-export type vars = {
+export type CampanhaVars = {
   nomeCampo: string;
   baseDadoId?: number;
 };
-
-export type CampanhaVars = Record<string, vars>;
 
 export type CampanhaFindAll = Pick<
   Campanha,
@@ -72,10 +72,11 @@ export type CampanhaExecucao = Pick<
 export type SourceConfig =
   | {
       readonly tipo: 'base';
-      readonly baseDeDadoId: number;
-      readonly campos: ReadonlySet<string>;
+      readonly estrutura: BaseDadosEstruturaDto[];
+      readonly campos: Set<string>;
     }
   | {
       readonly tipo: 'view';
+      readonly query: QueryView;
       readonly viewId: number;
     };
