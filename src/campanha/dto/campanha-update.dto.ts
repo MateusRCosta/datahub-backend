@@ -10,6 +10,7 @@ import { CampanhaVarsDto } from './campanha-contato-vars.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIdValid } from 'src/common/decorators/is-id-value.decorator';
 import { IsNameField } from 'src/common/decorators/is-name-field-value.decorator';
+import { CampanhaContatoCampoDto } from './campanha-contato-campo.dto';
 
 export class CampanhaUpdateDto {
   @IsOptional()
@@ -44,8 +45,8 @@ export class CampanhaUpdateDto {
   @IsOptional()
   @ValidateNested()
   @IsObject()
-  @Type(() => CampanhaVarsDto)
-  readonly contatoCampo?: CampanhaVarsDto;
+  @Type(() => CampanhaContatoCampoDto)
+  readonly contatoCampo?: CampanhaContatoCampoDto;
 
   @IsOptional()
   @ValidateNested({ each: true })

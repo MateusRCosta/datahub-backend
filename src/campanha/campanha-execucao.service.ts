@@ -31,6 +31,8 @@ import { Mensagem } from 'src/integracao-campanha/types/execucao.type';
 import { UpchatConfigTemplate } from 'src/template/types/template-upchat.types';
 import { BaseDadosService } from 'src/base-dados/base-dados.service';
 import { BaseDadosEstruturaDto } from 'src/base-dados/dto/base-dados-estrutura.dto';
+import { VarValor } from 'src/common/interfaces/integracao-campanha.interface';
+import { CampanhaContatoCampoDto } from './dto/campanha-contato-campo.dto';
 
 @Injectable()
 export class CampanhaExecucaoService {
@@ -85,8 +87,18 @@ export class CampanhaExecucaoService {
 
       try {
         await this.enviaBatch(campanha, pendentes);
-      } catch {
-        continue;
+      } catch (e: unknown) {
+        if (
+          e instanceof NotFoundException ||
+          e instanceof InternalServerErrorException ||
+          e instanceof BadRequestException
+        ) {
+          console.log(
+            `[CampanhaJobService] Erro ao processar batch: ` + e.message,
+          );
+          throw e;
+        }
+        break;
       }
     }
   }
@@ -98,6 +110,8 @@ export class CampanhaExecucaoService {
     console.log('[CampanhaJobService] Iniciando envio do batch', {
       campanhaId: campanha.id,
       totalPendentes: pendentes.length,
+      viewId: campanha.viewId,
+      baseDadosIs: campanha.baseDeDadosId,
     });
 
     const vars = campanha.vars as CampanhaVars[];
@@ -116,11 +130,11 @@ export class CampanhaExecucaoService {
     const clienteCampanhaComErro: number[] = [];
 
     let viewRows: Map<number, ViewRowCampanha>;
-    let acessor: (referencia: string, baseDadoId?: number) => unknown;
+    let consultador: (referencia: string, baseDadoId?: number) => unknown;
 
     for (const pendente of pendentes) {
       if (sourceConfig.tipo === 'base') {
-        acessor = this.montaAcessor({
+        consultador = this.montaConsultador({
           dados: pendente.cliente.dados as Record<
             string,
             string | number | boolean
@@ -131,19 +145,20 @@ export class CampanhaExecucaoService {
           sourceConfig.viewId,
           pendentes.map((item) => item.cliente.id),
         );
-        acessor = this.montaAcessor({
+        consultador = this.montaConsultador({
           query: sourceConfig.query,
           row: viewRows.get(pendente.cliente.id),
         });
       } else {
         throw new BadRequestException('Source config nao aceita');
       }
-      const contato = campanha.contatoCampo as CampanhaVars;
+      const contato =
+        campanha.contatoCampo as unknown as CampanhaContatoCampoDto;
       mensagens.push({
         meio: this.toStringOrEmpty(
-          acessor(contato.nomeCampo, contato.baseDadoId),
+          consultador(contato.valor, contato.baseDadosId),
         ),
-        parametros: this.resolveParametros(vars, acessor),
+        parametros: this.resolveParametros(vars, consultador),
       });
       clienteCampanhaIds.push(pendente.id);
     }
@@ -176,12 +191,6 @@ export class CampanhaExecucaoService {
         campanhaId: campanha.id,
         provedor: campanha.template.integracaoCampanha.provedor,
         totalMensagens: mensagens.length,
-      });
-      mensagens.map((mensagem) => {
-        console.log(`meio: ${mensagem.meio}`);
-        mensagem.parametros.map((param, index) =>
-          console.log(`${index} - ${param}`),
-        );
       });
       try {
         switch (
@@ -443,9 +452,7 @@ export class CampanhaExecucaoService {
     if (baseDeDadosId !== null) {
       const base =
         await this.baseDadosService.retornaEstruturaPorId(baseDeDadosId);
-
       if (!base) throw new NotFoundException('Base de dados nao encontrada');
-
       const estrutura = base.estrutura as unknown as BaseDadosEstruturaDto[];
 
       return {
@@ -457,7 +464,7 @@ export class CampanhaExecucaoService {
 
     if (viewId !== null) {
       const query = await this.viewService.buscaConfigPorId(viewId);
-      if (query) throw new NotFoundException('View nao encontrada');
+      if (!query) throw new NotFoundException('View nao encontrada');
       return {
         tipo: 'view',
         query: query as unknown as QueryView,
@@ -468,7 +475,7 @@ export class CampanhaExecucaoService {
     throw new BadRequestException('Campanha precisa ter view ou base de dados');
   }
 
-  montaAcessor({
+  montaConsultador({
     dados,
     query,
     row,
@@ -490,21 +497,24 @@ export class CampanhaExecucaoService {
         return alias ? row[alias] : undefined;
       };
     }
-    throw new BadRequestException('Configure um acessor');
+    throw new BadRequestException('Configure um consultador');
   }
 
   private resolveParametros(
     vars: CampanhaVars[],
-    accessor: (referencia: string, baseDadoId?: number) => unknown,
-  ): string[] {
+    consultador: (referencia: string, baseDadoId?: number) => unknown,
+  ): VarValor[] {
     return vars.map((v) => {
-      if (v.nomeCampo.startsWith(CAMPO_REFERENCIA_PREFIX)) {
-        return this.toStringOrEmpty(
-          accessor(v.nomeCampo.slice(1).trim(), v.baseDadoId),
+      if (v.valor.startsWith(CAMPO_REFERENCIA_PREFIX)) {
+        const valor = this.toStringOrEmpty(
+          consultador(v.valor.slice(1).trim(), v.baseDadosId),
         );
+        const nome = v.variavel;
+
+        return { variavel: nome, valor };
       }
 
-      return v.nomeCampo;
+      return { variavel: v.variavel, valor: v.valor };
     });
   }
 

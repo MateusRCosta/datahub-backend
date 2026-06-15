@@ -32,6 +32,7 @@ import { paginate } from 'src/common/utils/paginated-response';
 import { BaseDadosService } from 'src/base-dados/base-dados.service';
 import { Campo } from 'src/common/types/dados.types';
 import { CampanhaUpdateDto } from './dto/campanha-update.dto';
+import { CampanhaContatoCampoDto } from './dto/campanha-contato-campo.dto';
 
 @Injectable()
 export class CampanhaService {
@@ -377,25 +378,36 @@ export class CampanhaService {
   }
 
   private async validaFonteECampos(
-    contatoCampo: CampanhaVars,
+    contatoCampo: CampanhaContatoCampoDto,
     vars: CampanhaVars[],
     viewId?: number | null,
     baseDadosId?: number | null,
   ): Promise<void> {
-    const varsCompleto = [contatoCampo, ...vars];
+    const varsSemPrefixo = vars
+      .filter((v) => v.valor.startsWith('#'))
+      .map((v) => {
+        return {
+          variavel: v.variavel,
+          valor: v.valor.slice(1).trim(),
+          baseDadosId: v.baseDadosId,
+        };
+      });
+
     if (baseDadosId !== undefined && baseDadosId !== null) {
       const estrutura = await this.buscaEstrutura(baseDadosId);
       if (!estrutura || estrutura.length === 0)
         throw new BadRequestException('Base nao encontrada');
+      console.log(estrutura);
+      if (!estrutura.some((est) => est.cabecalho === contatoCampo.valor))
+        throw new BadRequestException('Contato campo nao encontrado');
 
-      for (const v of varsCompleto) {
-        const campoExiste = estrutura.some(
-          (est) => est.cabecalho === v.nomeCampo,
-        );
+      for (const v of varsSemPrefixo) {
+        console.log(v.valor);
+        const campoExiste = estrutura.some((est) => est.cabecalho === v.valor);
 
         if (!campoExiste) {
           throw new BadRequestException(
-            `Campo "${v.nomeCampo}" nao existe na base`,
+            `Campo "${v.valor}" nao existe na base`,
           );
         }
       }
@@ -406,10 +418,19 @@ export class CampanhaService {
       const query = await this.viewService.buscaConfigPorId(viewId);
       if (!query) throw new BadRequestException('View nao encontrada');
 
-      for (const VView of varsCompleto) {
-        if (!this.resolveViewAlias(query, VView.nomeCampo, VView.baseDadoId)) {
+      const existeContato = !this.resolveViewAlias(
+        query,
+        contatoCampo.valor,
+        contatoCampo.baseDadosId,
+      );
+
+      if (existeContato)
+        throw new BadRequestException('Contato campo nao encontrado na base');
+
+      for (const VView of varsSemPrefixo) {
+        if (!this.resolveViewAlias(query, VView.valor, VView.baseDadosId)) {
           throw new BadRequestException(
-            `Campo "${VView.nomeCampo}" na base #${VView.baseDadoId} nao existe na view`,
+            `Campo "${VView.valor}" na base #${VView.baseDadosId} nao existe na view`,
           );
         }
       }

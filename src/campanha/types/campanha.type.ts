@@ -7,6 +7,7 @@ import {
   View,
 } from '@prisma/client';
 import { BaseDadosEstruturaDto } from 'src/base-dados/dto/base-dados-estrutura.dto';
+import { VarValor } from 'src/common/interfaces/integracao-campanha.interface';
 import { Campo } from 'src/common/types/dados.types';
 import { QueryView } from 'src/view/types/view.types';
 
@@ -18,9 +19,8 @@ export enum STATUS_CAMPANHA {
   PENDENTE = 'pendente',
 }
 
-export type CampanhaVars = {
-  nomeCampo: string;
-  baseDadoId?: number;
+export type CampanhaVars = VarValor & {
+  baseDadosId?: number;
 };
 
 export type CampanhaFindAll = Pick<

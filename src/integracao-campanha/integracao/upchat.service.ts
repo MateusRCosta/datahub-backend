@@ -106,13 +106,13 @@ export class UpchatService {
     return clientesRaw.map((cliente) => {
       const varsTemplate =
         cliente.parametros.length > 0 ? cliente.parametros : [];
-
+      const variaveis = varsTemplate.map((v) => v.valor);
       return {
         templateId: templateConfigId,
         number: cliente.meio,
         country: 'BR',
         campaignName: nomeCampanha,
-        varsdata: varsTemplate,
+        varsdata: variaveis,
         hidden: false,
       };
     });

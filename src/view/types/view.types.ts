@@ -94,5 +94,5 @@ export type ViewRowWithClienteId = Record<string, unknown> & {
 };
 
 export type CampoView = Campo & {
-  baseDadoId: number;
+  baseDadosId: number;
 };
