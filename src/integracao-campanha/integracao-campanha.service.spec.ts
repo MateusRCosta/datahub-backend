@@ -381,17 +381,9 @@ describe('IntegracaoCampanhaService', () => {
     );
 
     expect(prismaService.integracaoCampanha.findFirst).toHaveBeenCalledWith({
-      where: { id: 1, deletedAt: null },
+      where: { id: 1, status: true, deletedAt: null },
       select: { id: true, provedor: true },
     });
-  });
-
-  it('retornaProvedorPorId retorna NotFoundException quando nao existe', async () => {
-    prismaService.integracaoCampanha.findFirst.mockResolvedValue(null);
-
-    await expect(service.retornaProvedorPorId(1)).rejects.toThrow(
-      NotFoundException,
-    );
   });
 
   it('executa envia mensagem via Upchat', async () => {

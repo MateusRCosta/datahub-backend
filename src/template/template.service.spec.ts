@@ -104,6 +104,16 @@ describe('TemplateService', () => {
     });
   });
 
+  it('cria retorna NotFoundException quando integracaoCampanha nao encontrada', async () => {
+    integracaoCampanhaService.retornaProvedorPorId.mockResolvedValue(undefined);
+
+    await expect(service.cria(createDto, 99)).rejects.toThrow(
+      NotFoundException,
+    );
+
+    expect(prismaService.template.create).not.toHaveBeenCalled();
+  });
+
   it('cria retorna BadRequestException quando provedor diverge da integracao campanha', async () => {
     integracaoCampanhaService.retornaProvedorPorId.mockResolvedValue(
       PROVEDOR_INTEGRACAO_CAMPANHA.EMAIL,

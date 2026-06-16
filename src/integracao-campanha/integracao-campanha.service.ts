@@ -248,18 +248,16 @@ export class IntegracaoCampanhaService {
 
   async retornaProvedorPorId(
     id: number,
-  ): Promise<PROVEDOR_INTEGRACAO_CAMPANHA> {
+  ): Promise<PROVEDOR_INTEGRACAO_CAMPANHA | undefined> {
     const integracaoCampanha =
       await this.prismaService.integracaoCampanha.findFirst({
-        where: { id, deletedAt: null },
+        where: { id, status: true, deletedAt: null },
         select: { id: true, provedor: true },
       });
 
-    if (!integracaoCampanha) {
-      throw new NotFoundException('Integracao campanha nao encontrada');
-    }
-
-    return integracaoCampanha.provedor as PROVEDOR_INTEGRACAO_CAMPANHA;
+    return integracaoCampanha?.provedor as
+      | PROVEDOR_INTEGRACAO_CAMPANHA
+      | undefined;
   }
 
   async executa(dto: AtivaExecucao): Promise<void> {

@@ -219,6 +219,9 @@ export class TemplateService {
         integracaoCampanhaId,
       );
 
+    if (!provedorIntegracao)
+      throw new NotFoundException('Integracao campanha nao encontrada');
+
     if (
       !Object.values(PROVEDOR_INTEGRACAO_CAMPANHA).includes(provedorIntegracao)
     ) {
