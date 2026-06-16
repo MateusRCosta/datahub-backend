@@ -289,6 +289,38 @@ describe('ViewService', () => {
     expect(offsetParam).toBe(5);
   });
 
+  it('executaCsv retorna csv da view', async () => {
+    prismaService.view.findFirst.mockResolvedValue({ config: queryView });
+    prismaService.$queryRawUnsafe.mockResolvedValue([
+      {
+        'b0-Email': 'joao@example.com',
+        'b0-Nome': 'Joao, Silva',
+        'b0-Observacao': 'Linha 1\nLinha "2"',
+        'b0-Metadata': { origem: 'site' },
+      },
+    ]);
+
+    await expect(service.executaCsv(1)).resolves.toBe(
+      'b0-Email,b0-Nome,b0-Observacao,b0-Metadata\njoao@example.com,"Joao, Silva","Linha 1\nLinha ""2""","{""origem"":""site""}"',
+    );
+
+    expect(viewQueryBuilderService.build).toHaveBeenCalledWith(queryView);
+    expect(prismaService.$queryRawUnsafe).toHaveBeenCalledTimes(1);
+    const [sql, baseParam] = prismaService.$queryRawUnsafe.mock.calls[0] as [
+      string,
+      number,
+    ];
+    expect(sql).not.toContain('LIMIT');
+    expect(baseParam).toBe(10);
+  });
+
+  it('executaCsv retorna string vazia quando nao ha linhas', async () => {
+    prismaService.view.findFirst.mockResolvedValue({ config: queryView });
+    prismaService.$queryRawUnsafe.mockResolvedValue([]);
+
+    await expect(service.executaCsv(1)).resolves.toBe('');
+  });
+
   it('executeComClienteId inclui _clienteId no select', async () => {
     prismaService.view.findFirst.mockResolvedValue({ config: queryView });
     prismaService.$queryRawUnsafe

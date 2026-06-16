@@ -5,6 +5,7 @@ import {
   Get,
   HttpCode,
   HttpStatus,
+  Header,
   Param,
   ParseIntPipe,
   Post,
@@ -35,6 +36,13 @@ export class ViewController {
   @Roles(Permissao.GERENCIAR_CAMPANHAS, Permissao.GERENCIAR_VISUALIZACOES)
   retornaTodosParaCampanha(@Query() query: ViewFindAllDto) {
     return this.viewService.retornaTodosParaCampanha(query);
+  }
+
+  @Get(':id/csv')
+  @Header('Content-Type', 'text/csv; charset=utf-8')
+  @Header('Content-Disposition', 'attachment; filename="visualizacao.csv"')
+  executaCsv(@Param('id', ParseIntPipe) id: number): Promise<string> {
+    return this.viewService.executaCsv(id);
   }
 
   @Get(':id')

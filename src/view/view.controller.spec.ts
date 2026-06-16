@@ -14,6 +14,7 @@ type ViewServiceMock = {
   retornaTodosParaCampanha: jest.Mock;
   retornaPorId: jest.Mock;
   executa: jest.Mock;
+  executaCsv: jest.Mock;
   cria: jest.Mock;
   atualiza: jest.Mock;
   exclui: jest.Mock;
@@ -59,6 +60,7 @@ describe('ViewController', () => {
       retornaTodosParaCampanha: jest.fn(),
       retornaPorId: jest.fn(),
       executa: jest.fn(),
+      executaCsv: jest.fn(),
       cria: jest.fn(),
       atualiza: jest.fn(),
       exclui: jest.fn(),
@@ -209,6 +211,27 @@ describe('ViewController', () => {
     expect(id).toBe(1);
     expect(query.page).toBe(2);
     expect(query.limit).toBe(5);
+  });
+
+  it('GET /views/:id/csv baixa csv da view', async () => {
+    viewService.executaCsv.mockResolvedValue(
+      'b0-Email,b0-Nome\njoao@example.com,"Joao, Silva"',
+    );
+
+    await request(app.getHttpServer())
+      .get('/views/1/csv')
+      .expect(200)
+      .expect('Content-Type', /text\/csv/)
+      .expect('Content-Disposition', 'attachment; filename="view.csv"')
+      .expect('b0-Email,b0-Nome\njoao@example.com,"Joao, Silva"');
+
+    expect(viewService.executaCsv).toHaveBeenCalledWith(1);
+  });
+
+  it('GET /views/:id/csv retorna 400 para id invalido', async () => {
+    await request(app.getHttpServer()).get('/views/abc/csv').expect(400);
+
+    expect(viewService.executaCsv).not.toHaveBeenCalled();
   });
 
   it('POST /views cria view usando usuario atual', async () => {

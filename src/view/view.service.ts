@@ -225,6 +225,16 @@ export class ViewService {
     return this.executePaginated(id, query, false);
   }
 
+  async executaCsv(id: number): Promise<string> {
+    const viewQuery = await this.findConfigById(id);
+    const builtQuery = await this.buildQuery(viewQuery, false);
+    const data = await this.prismaService.$queryRawUnsafe<
+      Record<string, unknown>[]
+    >(builtQuery.sql, ...builtQuery.params);
+
+    return this.toCsv(data);
+  }
+
   async executeComClienteId(
     id: number,
     query: ViewExecuteQueryDto,
@@ -318,6 +328,60 @@ export class ViewService {
       ),
       params: builtQuery.params,
     };
+  }
+
+  private toCsv(rows: Record<string, unknown>[]): string {
+    if (rows.length === 0) {
+      return '';
+    }
+
+    const headers = Object.keys(rows[0]);
+    const lines = rows.map((row) =>
+      headers.map((header) => this.escapeCsvValue(row[header])).join(','),
+    );
+
+    return [
+      headers.map((header) => this.escapeCsvValue(header)).join(','),
+      ...lines,
+    ].join('\n');
+  }
+
+  private escapeCsvValue(value: unknown): string {
+    if (value === null || value === undefined) {
+      return '';
+    }
+
+    const text = this.toCsvText(value);
+
+    if (!/[",\n\r]/.test(text)) {
+      return text;
+    }
+
+    return `"${text.replace(/"/g, '""')}"`;
+  }
+
+  private toCsvText(value: unknown): string {
+    if (value === null || value === undefined) {
+      return '';
+    }
+
+    if (value instanceof Date) {
+      return value.toISOString();
+    }
+
+    switch (typeof value) {
+      case 'string':
+        return value;
+      case 'number':
+      case 'boolean':
+      case 'bigint':
+      case 'symbol':
+        return value.toString();
+      case 'object':
+        return JSON.stringify(value) ?? '';
+      default:
+        return '';
+    }
   }
 
   private async findConfigById(id: number): Promise<QueryView> {
