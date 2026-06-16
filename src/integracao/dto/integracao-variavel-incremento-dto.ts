@@ -1,12 +1,13 @@
-import { IsBoolean, IsNumber, IsOptional } from 'class-validator';
+import { IsBoolean, IsOptional } from 'class-validator';
+import { IsIntNumberField } from 'src/common/decorators/is-int-number-field-value.decorator';
 
 export class IntegracaoVariavelIncrementoDto {
   @IsOptional()
   @IsBoolean()
   readonly incrementa: boolean | null = null;
 
+  @IsIntNumberField(2000, 578)
   @IsOptional()
-  @IsNumber()
   readonly limiteIncrementa: number | null = null;
 
   @IsOptional()

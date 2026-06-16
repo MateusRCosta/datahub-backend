@@ -1,7 +1,7 @@
 import { IsEnum, IsOptional } from 'class-validator';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { STATUS_CAMPANHA } from '../types/campanha.type';
-import { IsNameField } from 'src/common/decorators/is-name-field-value.decorator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 import { IsIdValid } from 'src/common/decorators/is-id-value.decorator';
 
 export class CampanhaFindAllQueryDto extends PaginationQueryDto {
@@ -10,7 +10,7 @@ export class CampanhaFindAllQueryDto extends PaginationQueryDto {
   readonly id?: number;
 
   @IsOptional()
-  @IsNameField(100, 'Campanha de inverno')
+  @IsTextField(100, 'Campanha de inverno')
   readonly nome?: string;
 
   @IsOptional()

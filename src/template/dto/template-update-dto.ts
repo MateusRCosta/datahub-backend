@@ -1,21 +1,13 @@
 import { Type } from 'class-transformer';
-import {
-  IsEnum,
-  IsNumber,
-  IsObject,
-  IsOptional,
-  IsString,
-  Max,
-  MaxLength,
-  ValidateNested,
-} from 'class-validator';
+import { IsEnum, IsObject, IsOptional, ValidateNested } from 'class-validator';
 import { getTemplateConfigDtoType } from './template-config.dto';
 import type { Config } from '../types/template.types';
 import { PROVEDOR_INTEGRACAO_CAMPANHA } from 'src/integracao-campanha/types/provedor-integracao-campanha.type';
+import { IsIntNumberField } from 'src/common/decorators/is-int-number-field-value.decorator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 
 export class UpdateTemplateDto {
-  @IsString()
-  @MaxLength(100)
+  @IsTextField(100, 'Template upchat')
   @IsOptional()
   readonly nome!: string;
 
@@ -23,8 +15,7 @@ export class UpdateTemplateDto {
   @IsOptional()
   readonly provedor!: PROVEDOR_INTEGRACAO_CAMPANHA;
 
-  @IsNumber()
-  @Max(1024)
+  @IsIntNumberField(1024, 0, 0)
   readonly quantidadeVars!: number;
 
   @IsObject()

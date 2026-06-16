@@ -1,13 +1,13 @@
 import { IsBoolean, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 import { TipoCampo } from '../util/type';
-import { IsNameField } from 'src/common/decorators/is-name-field-value.decorator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 
 export class BaseDadosEstruturaDto {
-  @IsNameField(100, 'idade')
+  @IsTextField(100, 'idade')
   @IsOptional()
   rotulo?: string | null;
 
-  @IsNameField(100, 'age')
+  @IsTextField(100, 'age')
   cabecalho!: string;
 
   @IsEnum(TipoCampo)

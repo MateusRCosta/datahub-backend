@@ -4,21 +4,25 @@ import {
   IsEmail,
   IsEnum,
   IsNotEmpty,
-  MaxLength,
+  Matches,
 } from 'class-validator';
-import { IsStrongPassword } from 'src/common/decorators/is-strong-password.decorator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 import { Permissao } from '../interfaces/permissao';
 
 export class UsuarioCreateDto {
   @IsNotEmpty()
-  @MaxLength(120)
+  @IsTextField(120, 'Joao Silva')
   readonly nome!: string;
 
   @IsEmail()
-  @MaxLength(120)
+  @IsTextField(120, 'joao@example.com')
   readonly email!: string;
 
-  @IsStrongPassword()
+  @IsTextField(255, 'password123', 8)
+  @Matches(/^(?=.*[a-z])(?=.*[A-Z])(?=.*[^A-Za-z0-9]).+$/, {
+    message:
+      'A senha deve ter no minimo 8 caracteres, uma letra maiuscula, uma letra minuscula e um caractere especial',
+  })
   readonly senha!: string;
 
   @IsBoolean()

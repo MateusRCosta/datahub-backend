@@ -1,8 +1,6 @@
 import { TipoCampo } from 'src/base-dados/util/type';
 import {
   IsNotEmpty,
-  IsString,
-  MaxLength,
   IsOptional,
   ValidateNested,
   IsEnum,
@@ -10,20 +8,19 @@ import {
 import { Type } from 'class-transformer';
 import { IntegracaoVariavelIncrementoDto } from './integracao-variavel-incremento-dto';
 import { ValidateIncrementoCondicional } from 'src/common/decorators/validate-incremento-condicional.decorator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 
 export class IntegracaoVariavelDto {
-  @IsString()
-  @MaxLength(100)
+  @IsTextField(100, 'id')
   @IsNotEmpty()
   readonly nome!: string;
 
-  @IsString()
-  @MaxLength(256)
+  @IsTextField(256, 'id')
   @IsNotEmpty()
   readonly valor!: string;
 
-  @IsNotEmpty()
   @IsEnum(TipoCampo)
+  @IsNotEmpty()
   readonly tipo!: TipoCampo;
 
   @IsOptional()

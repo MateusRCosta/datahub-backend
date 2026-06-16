@@ -4,37 +4,30 @@ import {
   IsDefined,
   IsEnum,
   IsIn,
-  IsInt,
   IsOptional,
-  IsString,
-  Max,
-  MaxLength,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
 import { IsFilterValue } from 'src/common/decorators/is-filter-value.decorator';
+import { IsIdValid } from 'src/common/decorators/is-id-value.decorator';
+import { IsIntNumberField } from 'src/common/decorators/is-int-number-field-value.decorator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 import { OPERADOR, OPERADOR_WHERE, TIPO_JOIN } from '../types/view.types';
 import { MAX_JOINS } from '../constants';
 
 export class FromDto {
-  @Type(() => Number)
-  @IsInt()
-  @Max(1000000)
+  @IsIdValid()
   readonly baseDadosId!: number;
 }
 
 export class JoinDto {
-  @Type(() => Number)
-  @IsInt()
-  @Max(1000000)
+  @IsIdValid()
   readonly baseDadosIdJoin!: number;
 
-  @IsString()
-  @MaxLength(100)
+  @IsTextField(100, 'cliente_id')
   readonly campoFrom!: string;
 
-  @IsString()
-  @MaxLength(100)
+  @IsTextField(100, 'id')
   readonly campoJoin!: string;
 
   @IsEnum(TIPO_JOIN)
@@ -42,23 +35,18 @@ export class JoinDto {
 }
 
 export class SelectCampoDto {
-  @IsString()
-  @MaxLength(100)
+  @IsTextField(100, 'nome')
   readonly campo!: string;
 
-  @IsString()
-  @MaxLength(100)
+  @IsTextField(100, 'Nome')
   readonly rotulo!: string;
 }
 
 export class SelectDto {
-  @Type(() => Number)
-  @IsInt()
-  @Max(1000000)
+  @IsIdValid()
   readonly baseDadosId!: number;
 
-  @Type(() => Number)
-  @Max(MAX_JOINS - 1)
+  @IsIntNumberField(MAX_JOINS - 1, 0, 0)
   readonly joinIndex!: number;
 
   @IsArray()
@@ -68,18 +56,13 @@ export class SelectDto {
 }
 
 export class FilterDto {
-  @Type(() => Number)
-  @IsInt()
-  @Max(1000000)
+  @IsIntNumberField(1000000, 0, 0)
   readonly joinIndex!: number;
 
-  @Type(() => Number)
-  @IsInt()
-  @Max(1000000)
+  @IsIdValid()
   readonly baseDadosId!: number;
 
-  @IsString()
-  @MaxLength(100)
+  @IsTextField(100, 'nome')
   readonly campo!: string;
 
   @IsEnum(OPERADOR)

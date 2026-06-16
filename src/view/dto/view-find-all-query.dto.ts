@@ -1,15 +1,14 @@
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsOptional } from 'class-validator';
+import { IsIdValid } from 'src/common/decorators/is-id-value.decorator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
 export class ViewFindAllDto extends PaginationQueryDto {
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
+  @IsIdValid()
   readonly id?: number;
 
   @IsOptional()
-  @IsString()
-  @MaxLength(100)
+  @IsTextField(100, 'View clientes')
   readonly nome?: string;
 }

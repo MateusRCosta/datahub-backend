@@ -1,18 +1,12 @@
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, Max, Min } from 'class-validator';
+import { IsOptional } from 'class-validator';
+import { IsIntNumberField } from 'src/common/decorators/is-int-number-field-value.decorator';
 
 export class ViewExecuteQueryDto {
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(1000)
+  @IsIntNumberField(1000, 1, 1)
   readonly page?: number = 1;
 
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
-  @Min(1)
-  @Max(100)
+  @IsIntNumberField(100, 10, 1)
   readonly limit?: number = 10;
 }

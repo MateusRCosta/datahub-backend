@@ -1,12 +1,8 @@
 import {
   IsArray,
-  IsNumber,
+  IsEnum,
   IsOptional,
-  IsString,
   IsUrl,
-  Max,
-  MaxLength,
-  Min,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -14,29 +10,26 @@ import { IntegracaoResponseDto } from './integracao-response-dto';
 import { IntegracaoHeaderDto } from './integracao-header-dto';
 import { IntegracaoVariavelDto } from './integracao-variavel-dto';
 import { METODO } from '../types/integracao.type';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
+import { IsIntNumberField } from 'src/common/decorators/is-int-number-field-value.decorator';
 
 export class IntegracaoCreateDto {
-  @MaxLength(100)
-  @IsString()
+  @IsTextField(100, 'Scrapping contratos')
   readonly nome!: string;
-  @Max(50)
-  @IsNumber()
+
+  @IsIntNumberField(50, 10)
   readonly limitDeRequisicaoPorMin: number = 10;
 
-  @Max(23)
-  @Min(0)
-  @IsNumber()
+  @IsIntNumberField(23, 4, 0)
   readonly horaExecucao: number = 0;
 
   //auth
-  @MaxLength(200)
-  @IsString()
+  @IsTextField(200, 'https://api.example.com/auth')
   @IsUrl()
   @IsOptional()
   readonly urlAuth!: string;
 
-  @MaxLength(20)
-  @IsString()
+  @IsEnum(METODO)
   @IsOptional()
   readonly metodoAuth!: METODO;
 
@@ -46,8 +39,7 @@ export class IntegracaoCreateDto {
   @Type(() => IntegracaoHeaderDto)
   readonly headersAuth!: IntegracaoHeaderDto[];
 
-  @MaxLength(1024)
-  @IsString()
+  @IsTextField(1024, '{ "id":123 }')
   @IsOptional()
   readonly bodyAuth!: string;
 
@@ -64,14 +56,12 @@ export class IntegracaoCreateDto {
   readonly variaveisAuth!: IntegracaoVariavelDto[];
 
   //refresh
-  @MaxLength(200)
-  @IsString()
+  @IsTextField(200, 'https://api.example.com/refresh')
   @IsUrl()
   @IsOptional()
   readonly urlRefresh!: string;
 
-  @MaxLength(20)
-  @IsString()
+  @IsEnum(METODO)
   @IsOptional()
   readonly metodoRefresh!: METODO;
 
@@ -81,8 +71,7 @@ export class IntegracaoCreateDto {
   @IsOptional()
   readonly headersRefresh!: IntegracaoHeaderDto[];
 
-  @MaxLength(1024)
-  @IsString()
+  @IsTextField(1024, '{ "id":123 }')
   @IsOptional()
   readonly bodyRefresh!: string;
 
@@ -99,13 +88,11 @@ export class IntegracaoCreateDto {
   readonly variaveisRefresh!: IntegracaoVariavelDto[];
 
   //scrap
-  @MaxLength(200)
-  @IsString()
+  @IsTextField(200, 'https://api.example.com/scrap')
   @IsUrl()
   readonly urlScrap!: string;
 
-  @MaxLength(20)
-  @IsString()
+  @IsEnum(METODO)
   readonly metodoScrap!: METODO;
 
   @IsArray()
@@ -114,8 +101,7 @@ export class IntegracaoCreateDto {
   @IsOptional()
   readonly headersScrap!: IntegracaoHeaderDto[];
 
-  @MaxLength(1024)
-  @IsString()
+  @IsTextField(1024, '{ "id":123 }')
   @IsOptional()
   readonly bodyScrap!: string;
 

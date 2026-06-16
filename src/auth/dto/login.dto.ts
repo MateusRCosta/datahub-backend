@@ -1,20 +1,12 @@
-import { ApiProperty } from '@nestjs/swagger';
-import { IsEmail, IsNotEmpty, MaxLength } from 'class-validator';
+import { IsEmail, IsNotEmpty } from 'class-validator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 
 export class LoginDto {
   @IsEmail()
-  @MaxLength(255)
-  @ApiProperty({
-    maxLength: 255,
-    example: 'user@example.com',
-  })
+  @IsTextField(255, 'user@example.com')
   readonly email!: string;
 
+  @IsTextField(255, 'password123')
   @IsNotEmpty()
-  @MaxLength(255)
-  @ApiProperty({
-    maxLength: 255,
-    example: 'password123',
-  })
   readonly senha!: string;
 }

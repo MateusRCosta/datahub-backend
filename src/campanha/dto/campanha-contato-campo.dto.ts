@@ -1,9 +1,9 @@
 import { IsOptional } from 'class-validator';
 import { IsIdValid } from 'src/common/decorators/is-id-value.decorator';
-import { IsNameField } from 'src/common/decorators/is-name-field-value.decorator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 
 export class CampanhaContatoCampoDto {
-  @IsNameField(100, 'telefone')
+  @IsTextField(100, 'telefone')
   readonly valor!: string;
 
   @IsOptional()

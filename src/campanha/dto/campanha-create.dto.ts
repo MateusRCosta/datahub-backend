@@ -10,11 +10,11 @@ import {
 import { CampanhaVarsDto } from './campanha-contato-vars.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIdValid } from 'src/common/decorators/is-id-value.decorator';
-import { IsNameField } from 'src/common/decorators/is-name-field-value.decorator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 import { CampanhaContatoCampoDto } from './campanha-contato-campo.dto';
 
 export class CampanhaCreateDto {
-  @IsNameField(100, 'id')
+  @IsTextField(100, 'id')
   readonly nome!: string;
 
   @ApiProperty({

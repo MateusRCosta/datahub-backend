@@ -1,16 +1,17 @@
-import { IsBoolean, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
 import { TipoCampo } from 'src/base-dados/util/type';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 
 export class IntegracaoResponseDto {
-  @MaxLength(100)
-  @IsString()
+  @IsTextField(100, 'id')
   readonly nome!: string;
-  @MaxLength(100)
-  @IsString()
+
+  @IsTextField(100, '[n].id')
   readonly path!: string;
-  @MaxLength(20)
-  @IsString()
+
+  @IsEnum(TipoCampo)
   readonly tipo!: TipoCampo;
+
   @IsBoolean()
   @IsOptional()
   readonly array!: boolean;

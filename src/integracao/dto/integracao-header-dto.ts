@@ -5,10 +5,10 @@ import {
   MaxLength,
   ValidateIf,
 } from 'class-validator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 
 export class IntegracaoHeaderDto {
-  @IsString()
-  @MaxLength(100)
+  @IsTextField(100, 'Authorization')
   readonly chave!: string;
 
   @ValidateIf((_, value) => typeof value === 'string')

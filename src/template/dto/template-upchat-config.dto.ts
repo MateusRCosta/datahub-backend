@@ -1,64 +1,48 @@
 import { Type } from 'class-transformer';
-import {
-  ArrayMaxSize,
-  IsEnum,
-  IsArray,
-  IsNumber,
-  IsString,
-  Max,
-  MaxLength,
-  ValidateNested,
-} from 'class-validator';
+import { ArrayMaxSize, IsEnum, IsArray, ValidateNested } from 'class-validator';
+import { IsIntNumberField } from 'src/common/decorators/is-int-number-field-value.decorator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 import { BOTAO_ENUM, BotaoDto } from '../types/template-upchat.types';
 
 class BotaoBaseDto {
   @IsEnum(BOTAO_ENUM)
   readonly tipo!: BOTAO_ENUM;
 
-  @IsString()
-  @MaxLength(25)
+  @IsTextField(25, 'Confirmar')
   readonly textoBotao!: string;
 }
 
 export class BotaoFlowDto extends BotaoBaseDto {
-  @IsString()
-  @MaxLength(36)
+  @IsTextField(36, 'flow-id')
   readonly flowId!: string;
 }
 
 export class BotaoQuickReplyDto extends BotaoBaseDto {}
 
 export class BotaoUrlDto extends BotaoBaseDto {
-  @IsString()
-  @MaxLength(2000)
+  @IsTextField(2000, 'https://example.com')
   readonly url!: string;
 }
 
 export class BotaoPhoneNumberDto extends BotaoBaseDto {
-  @IsString()
-  @MaxLength(20)
+  @IsTextField(20, '+5511999999999')
   readonly numeroTelefone!: string;
 }
 
 export class UpchatConfigDto {
-  @IsNumber()
-  @Max(65536)
+  @IsIntNumberField(65536, 1, 0)
   readonly id!: number;
 
-  @IsString()
-  @MaxLength(512)
+  @IsTextField(512, 'Template boas vindas')
   readonly nome!: string;
 
-  @IsString()
-  @MaxLength(60)
+  @IsTextField(60, 'Boas vindas')
   readonly tituloTemplate!: string;
 
-  @IsString()
-  @MaxLength(1024)
+  @IsTextField(1024, 'Ola, seja bem-vindo')
   readonly mensagemTemplate!: string;
 
-  @IsString()
-  @MaxLength(60)
+  @IsTextField(60, 'Equipe')
   readonly rodapeTemplate!: string;
 
   @IsArray()

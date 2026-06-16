@@ -1,23 +1,16 @@
 import { Type } from 'class-transformer';
-import {
-  IsBoolean,
-  IsEnum,
-  IsInt,
-  IsOptional,
-  IsString,
-  MaxLength,
-} from 'class-validator';
+import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
+import { IsIdValid } from 'src/common/decorators/is-id-value.decorator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { PROVEDOR_INTEGRACAO_CAMPANHA } from '../types/provedor-integracao-campanha.type';
 
 export class IntegracaoCampanhaFindAllQueryDto extends PaginationQueryDto {
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
+  @IsIdValid()
   readonly id?: number;
 
-  @MaxLength(120)
-  @IsString()
+  @IsTextField(120, 'Upchat')
   @IsOptional()
   readonly nome!: string;
 

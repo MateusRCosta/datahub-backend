@@ -9,12 +9,12 @@ import {
 import { CampanhaVarsDto } from './campanha-contato-vars.dto';
 import { ApiProperty } from '@nestjs/swagger';
 import { IsIdValid } from 'src/common/decorators/is-id-value.decorator';
-import { IsNameField } from 'src/common/decorators/is-name-field-value.decorator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 import { CampanhaContatoCampoDto } from './campanha-contato-campo.dto';
 
 export class CampanhaUpdateDto {
   @IsOptional()
-  @IsNameField(100, 'Campanha de natal')
+  @IsTextField(100, 'Campanha de natal')
   readonly nome?: string;
 
   @IsOptional()

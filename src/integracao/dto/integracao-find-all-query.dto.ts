@@ -1,20 +1,18 @@
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsOptional } from 'class-validator';
+import { IsIdValid } from 'src/common/decorators/is-id-value.decorator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 
 export class IntegracaoFindAllQueryDto extends PaginationQueryDto {
+  @IsIdValid()
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
   readonly id?: number;
 
+  @IsTextField(100, 'ixc')
   @IsOptional()
-  @IsString()
-  @MaxLength(120)
   readonly nome?: string;
 
+  @IsIdValid()
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
   readonly usuarioId?: number;
 }

@@ -3,11 +3,10 @@ import {
   IsEnum,
   IsObject,
   IsOptional,
-  IsString,
-  MaxLength,
   ValidateIf,
   ValidateNested,
 } from 'class-validator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 import { getIntegracaoCampanhaConfigType } from './integracao-campanha-config.dto';
 import {
   PROVEDOR_INTEGRACAO_CAMPANHA,
@@ -15,8 +14,7 @@ import {
 } from '../types/provedor-integracao-campanha.type';
 
 export class IntegracaoCampanhaUpdateDto {
-  @MaxLength(120)
-  @IsString()
+  @IsTextField(120, 'Upchat')
   @IsOptional()
   readonly nome!: string;
 

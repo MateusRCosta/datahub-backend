@@ -1,14 +1,7 @@
-import { Type } from 'class-transformer';
 import type { TypeHelpOptions } from 'class-transformer';
-import {
-  IsEmail,
-  IsInt,
-  IsString,
-  IsUrl,
-  Max,
-  MaxLength,
-  Min,
-} from 'class-validator';
+import { IsEmail, IsUrl } from 'class-validator';
+import { IsIntNumberField } from 'src/common/decorators/is-int-number-field-value.decorator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 import {
   IntegracaoCampanhaComProvedor,
   IntegracaoCampanhaConfigType,
@@ -16,31 +9,25 @@ import {
 } from '../types/provedor-integracao-campanha.type';
 
 export class UpchatConfigDto {
-  @IsString()
-  @MaxLength(200)
+  @IsTextField(200, 'https://api.example.com')
   @IsUrl({ protocols: ['http', 'https'], require_protocol: true })
   readonly url!: string;
 
-  @Type(() => Number)
-  @IsInt()
-  @Min(0)
-  @Max(32767)
+  @IsIntNumberField(32767, 0, 0)
   readonly queueId!: number;
 
-  @IsString()
-  @MaxLength(128)
+  @IsTextField(128, 'api-key')
   readonly apiKey!: string;
 }
 
 export class EmailConfigDto {
   @IsEmail()
-  @MaxLength(120)
+  @IsTextField(120, 'contato@example.com')
   readonly email!: string;
 }
 
 export class DisparoProConfigDto {
-  @IsString()
-  @MaxLength(128)
+  @IsTextField(128, 'api-key')
   readonly apiKey!: string;
 }
 

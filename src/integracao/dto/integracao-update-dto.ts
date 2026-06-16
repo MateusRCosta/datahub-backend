@@ -1,12 +1,8 @@
 import {
   IsArray,
-  IsNumber,
+  IsEnum,
   IsOptional,
-  IsString,
   IsUrl,
-  Max,
-  MaxLength,
-  Min,
   ValidateNested,
 } from 'class-validator';
 import { Type } from 'class-transformer';
@@ -14,32 +10,30 @@ import { IntegracaoResponseDto } from './integracao-response-dto';
 import { IntegracaoHeaderDto } from './integracao-header-dto';
 import { IntegracaoVariavelDto } from './integracao-variavel-dto';
 import { METODO } from '../types/integracao.type';
+import { IsIntNumberField } from 'src/common/decorators/is-int-number-field-value.decorator';
+import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 
 export class IntegracaoUpdateDto {
-  @MaxLength(100)
-  @IsString()
+  @IsTextField(100, 'Scrapping contratos')
   @IsOptional()
   readonly nome!: string;
-  @Max(50)
-  @IsNumber()
+
+  @IsIntNumberField(50, 10)
   @IsOptional()
   readonly limitDeRequisicaoPorMin: number = 10;
 
-  @Max(23)
-  @Min(0)
-  @IsNumber()
+  @IsIntNumberField(23, 4, 0)
   @IsOptional()
   readonly horaExecucao: number = 0;
 
   //auth
-  @MaxLength(200)
-  @IsString()
+  @IsTextField(200, 'https://api.example.com/auth')
   @IsUrl()
   @IsOptional()
   readonly urlAuth!: string;
 
-  @MaxLength(20)
-  @IsString()
+  @IsEnum(METODO)
+  @IsOptional()
   @IsOptional()
   readonly metodoAuth!: METODO;
 
@@ -49,8 +43,7 @@ export class IntegracaoUpdateDto {
   @Type(() => IntegracaoHeaderDto)
   readonly headersAuth!: IntegracaoHeaderDto[];
 
-  @MaxLength(1024)
-  @IsString()
+  @IsTextField(1024, '{ "id":123 }')
   @IsOptional()
   readonly bodyAuth!: string;
 
@@ -67,14 +60,12 @@ export class IntegracaoUpdateDto {
   readonly variaveisAuth!: IntegracaoVariavelDto[];
 
   //refresh
-  @MaxLength(200)
-  @IsString()
+  @IsTextField(200, 'https://api.example.com/refresh')
   @IsUrl()
   @IsOptional()
   readonly urlRefresh!: string;
 
-  @MaxLength(20)
-  @IsString()
+  @IsEnum(METODO)
   @IsOptional()
   readonly metodoRefresh!: METODO;
 
@@ -84,8 +75,7 @@ export class IntegracaoUpdateDto {
   @IsOptional()
   readonly headersRefresh!: IntegracaoHeaderDto[];
 
-  @MaxLength(1024)
-  @IsString()
+  @IsTextField(1024, '{ "id":123 }')
   @IsOptional()
   readonly bodyRefresh!: string;
 
@@ -102,14 +92,12 @@ export class IntegracaoUpdateDto {
   readonly variaveisRefresh!: IntegracaoVariavelDto[];
 
   //scrap
-  @MaxLength(200)
-  @IsString()
+  @IsTextField(200, 'https://api.example.com/scrap')
   @IsUrl()
   @IsOptional()
   readonly urlScrap!: string;
 
-  @MaxLength(20)
-  @IsString()
+  @IsEnum(METODO)
   @IsOptional()
   readonly metodoScrap!: METODO;
 
@@ -119,8 +107,7 @@ export class IntegracaoUpdateDto {
   @IsOptional()
   readonly headersScrap!: IntegracaoHeaderDto[];
 
-  @MaxLength(1024)
-  @IsString()
+  @IsTextField(1024, '{ "id":123 }')
   @IsOptional()
   readonly bodyScrap!: string;
 
