@@ -4,6 +4,7 @@ import { TipoCampo } from 'src/base-dados/util/type';
 import { PrismaService } from 'src/config/prisma.service';
 import {
   BaseMetadata,
+  BuiltPaginatedQuery,
   BuiltQuery,
   QueryContext,
 } from './types/query-builder.types';
@@ -54,6 +55,38 @@ export class ViewQueryBuilderService {
     return { sql, params: ctx.params };
   }
 
+  async buildPaginated(
+    query: QueryView,
+    page: number,
+    limit: number,
+    includeClienteId: boolean,
+  ): Promise<BuiltPaginatedQuery> {
+    const builtQuery = await this.buildWithOptions(query, includeClienteId);
+    const skip = (page - 1) * limit;
+    const limitParam = `$${builtQuery.params.length + 1}`;
+    const offsetParam = `$${builtQuery.params.length + 2}`;
+
+    return {
+      dataSql: `WITH "view_result" AS MATERIALIZED (${builtQuery.sql}) SELECT * FROM "view_result" LIMIT ${limitParam} OFFSET ${offsetParam}`,
+      dataParams: [...builtQuery.params, limit, skip],
+      totalSql: `SELECT COUNT(*)::int AS "total" FROM (${builtQuery.sql}) AS "view_result"`,
+      totalParams: builtQuery.params,
+    };
+  }
+
+  async buildPorClienteIds(
+    query: QueryView,
+    clienteIds: number[],
+  ): Promise<BuiltQuery> {
+    const builtQuery = await this.buildWithOptions(query, true);
+    const clienteIdsParam = `$${builtQuery.params.length + 1}`;
+
+    return {
+      sql: `${builtQuery.sql} AND c0."id" = ANY(${clienteIdsParam}::int[])`,
+      params: [...builtQuery.params, clienteIds],
+    };
+  }
+
   async execute(query: QueryView): Promise<Record<string, unknown>[]> {
     const builtQuery = await this.build(query);
 
@@ -61,6 +94,25 @@ export class ViewQueryBuilderService {
       builtQuery.sql,
       ...builtQuery.params,
     );
+  }
+
+  private async buildWithOptions(
+    query: QueryView,
+    includeClienteId: boolean,
+  ): Promise<BuiltQuery> {
+    const builtQuery = await this.build(query);
+
+    if (!includeClienteId) {
+      return builtQuery;
+    }
+
+    return {
+      sql: builtQuery.sql.replace(
+        /^SELECT\s/i,
+        'SELECT c0."id" AS "_clienteId", ',
+      ),
+      params: builtQuery.params,
+    };
   }
 
   // VALIDACAO

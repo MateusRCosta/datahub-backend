@@ -222,7 +222,7 @@ describe('ViewController', () => {
       .get('/views/1/csv')
       .expect(200)
       .expect('Content-Type', /text\/csv/)
-      .expect('Content-Disposition', 'attachment; filename="view.csv"')
+      .expect('Content-Disposition', 'attachment; filename="visualizacao.csv"')
       .expect('b0-Email,b0-Nome\njoao@example.com,"Joao, Silva"');
 
     expect(viewService.executaCsv).toHaveBeenCalledWith(1);

@@ -23,6 +23,8 @@ type PrismaServiceMock = {
 
 type ViewQueryBuilderServiceMock = {
   build: jest.Mock;
+  buildPaginated: jest.Mock;
+  buildPorClienteIds: jest.Mock;
 };
 
 describe('ViewService', () => {
@@ -60,6 +62,28 @@ describe('ViewService', () => {
       build: jest.fn().mockResolvedValue({
         sql: 'SELECT c0."dados" ->> \'email\' AS "b0-Email" FROM "clientes" c0 WHERE c0."baseDeDadosId" = $1',
         params: [10],
+      }),
+      buildPaginated: jest
+        .fn()
+        .mockImplementation(
+          (
+            _query: QueryView,
+            page: number,
+            limit: number,
+            includeClienteId: boolean,
+          ) => ({
+            dataSql: includeClienteId
+              ? 'WITH "view_result" AS MATERIALIZED (SELECT c0."id" AS "_clienteId", c0."dados" ->> \'email\' AS "b0-Email" FROM "clientes" c0 WHERE c0."baseDeDadosId" = $1) SELECT * FROM "view_result" LIMIT $2 OFFSET $3'
+              : 'WITH "view_result" AS MATERIALIZED (SELECT c0."dados" ->> \'email\' AS "b0-Email" FROM "clientes" c0 WHERE c0."baseDeDadosId" = $1) SELECT * FROM "view_result" LIMIT $2 OFFSET $3',
+            dataParams: [10, limit, (page - 1) * limit],
+            totalSql:
+              'SELECT COUNT(*)::int AS "total" FROM (SELECT c0."dados" ->> \'email\' AS "b0-Email" FROM "clientes" c0 WHERE c0."baseDeDadosId" = $1) AS "view_result"',
+            totalParams: [10],
+          }),
+        ),
+      buildPorClienteIds: jest.fn().mockResolvedValue({
+        sql: 'SELECT c0."id" AS "_clienteId", c0."dados" ->> \'email\' AS "b0-Email" FROM "clientes" c0 WHERE c0."baseDeDadosId" = $1 AND c0."id" = ANY($2::int[])',
+        params: [10, [10, 20]],
       }),
     };
 
@@ -279,10 +303,17 @@ describe('ViewService', () => {
       },
     });
 
-    expect(viewQueryBuilderService.build).toHaveBeenCalledWith(queryView);
+    expect(viewQueryBuilderService.buildPaginated).toHaveBeenCalledWith(
+      queryView,
+      2,
+      5,
+      false,
+    );
     expect(prismaService.$queryRawUnsafe).toHaveBeenCalledTimes(2);
     const [dataSql, baseParam, limitParam, offsetParam] = prismaService
       .$queryRawUnsafe.mock.calls[0] as [string, number, number, number];
+    expect(dataSql).toContain('WITH "view_result" AS MATERIALIZED');
+    expect(dataSql).toContain('SELECT * FROM "view_result"');
     expect(dataSql).toContain('LIMIT $2 OFFSET $3');
     expect(baseParam).toBe(10);
     expect(limitParam).toBe(5);
@@ -341,6 +372,12 @@ describe('ViewService', () => {
       },
     });
 
+    expect(viewQueryBuilderService.buildPaginated).toHaveBeenCalledWith(
+      queryView,
+      1,
+      10,
+      true,
+    );
     const [dataSql] = prismaService.$queryRawUnsafe.mock.calls[0] as [string];
     expect(dataSql).toContain('SELECT c0."id" AS "_clienteId", ');
   });
@@ -361,6 +398,10 @@ describe('ViewService', () => {
       { _clienteId: 10, Email: 'joao@example.com' },
     ]);
 
+    expect(viewQueryBuilderService.buildPorClienteIds).toHaveBeenCalledWith(
+      queryView,
+      [10, 20],
+    );
     const [sql, baseParam, clienteIds] = prismaService.$queryRawUnsafe.mock
       .calls[0] as [string, number, number[]];
     expect(sql).toContain('AND c0."id" = ANY($2::int[])');

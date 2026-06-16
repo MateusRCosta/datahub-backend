@@ -7,6 +7,13 @@ export type BuiltQuery = {
   readonly params: readonly unknown[];
 };
 
+export type BuiltPaginatedQuery = {
+  readonly dataSql: string;
+  readonly dataParams: readonly unknown[];
+  readonly totalSql: string;
+  readonly totalParams: readonly unknown[];
+};
+
 export type QueryContext = {
   readonly aliasesByKey: Map<string, string>;
   readonly joinIndexParaBaseDadosId: Map<number, number>;

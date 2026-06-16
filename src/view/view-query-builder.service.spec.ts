@@ -102,6 +102,32 @@ describe('ViewQueryBuilderService', () => {
     expect(idade).toBe(18);
   });
 
+  it('buildPaginated monta SQL paginado e count', async () => {
+    const result = await service.buildPaginated(query, 2, 5, false);
+
+    expect(result.dataSql).toContain('WITH "view_result" AS MATERIALIZED');
+    expect(result.dataSql).toContain('SELECT * FROM "view_result"');
+    expect(result.dataSql).toContain('LIMIT $3 OFFSET $4');
+    expect(result.dataParams).toEqual([10, 18, 5, 5]);
+    expect(result.totalSql).toContain('SELECT COUNT(*)::int AS "total"');
+    expect(result.totalParams).toEqual([10, 18]);
+  });
+
+  it('buildPaginated inclui _clienteId quando solicitado', async () => {
+    const result = await service.buildPaginated(query, 1, 10, true);
+
+    expect(result.dataSql).toContain('SELECT c0."id" AS "_clienteId", ');
+    expect(result.dataParams).toEqual([10, 18, 10, 0]);
+  });
+
+  it('buildPorClienteIds monta filtro por ids de clientes', async () => {
+    const result = await service.buildPorClienteIds(query, [10, 20]);
+
+    expect(result.sql).toContain('SELECT c0."id" AS "_clienteId", ');
+    expect(result.sql).toContain('AND c0."id" = ANY($3::int[])');
+    expect(result.params).toEqual([10, 18, [10, 20]]);
+  });
+
   it('build monta join inner', async () => {
     baseDadosService.retornaEstruturasPorIds.mockResolvedValue([
       { id: 10, estrutura: estruturaBase },
