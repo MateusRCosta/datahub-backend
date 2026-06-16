@@ -1,5 +1,5 @@
-import { Type } from 'class-transformer';
-import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
+import { IsEnum, IsOptional } from 'class-validator';
+import { IsBooleanField } from 'src/common/decorators/is-boolean-field-value.decorator';
 import { IsIdValid } from 'src/common/decorators/is-id-value.decorator';
 import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
@@ -19,7 +19,6 @@ export class IntegracaoCampanhaFindAllQueryDto extends PaginationQueryDto {
   readonly provedor?: PROVEDOR_INTEGRACAO_CAMPANHA;
 
   @IsOptional()
-  @Type(() => Boolean)
-  @IsBoolean()
+  @IsBooleanField(true)
   readonly status?: boolean;
 }

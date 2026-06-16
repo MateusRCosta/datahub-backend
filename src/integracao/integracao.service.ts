@@ -44,6 +44,7 @@ export class IntegracaoService {
         id: query.id,
         nome: query.nome,
         usuarioId: query.usuarioId,
+        status: query.status,
       },
       integracoesFilterConfig,
       { deletedAt: null },

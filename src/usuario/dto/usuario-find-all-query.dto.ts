@@ -1,9 +1,9 @@
-import { IsArray, IsBoolean, IsEnum, IsOptional } from 'class-validator';
+import { IsArray, IsEnum, IsOptional } from 'class-validator';
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
 import { Permissao } from '../interfaces/permissao';
-import { Type } from 'class-transformer';
 import { IsIdValid } from 'src/common/decorators/is-id-value.decorator';
 import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
+import { IsBooleanField } from 'src/common/decorators/is-boolean-field-value.decorator';
 
 export class UsuarioFindAllQueryDto extends PaginationQueryDto {
   @IsOptional()
@@ -19,13 +19,11 @@ export class UsuarioFindAllQueryDto extends PaginationQueryDto {
   readonly email?: string;
 
   @IsOptional()
-  @Type(() => Boolean)
-  @IsBoolean()
+  @IsBooleanField(false)
   readonly admin?: boolean;
 
   @IsOptional()
-  @Type(() => Boolean)
-  @IsBoolean()
+  @IsBooleanField(true)
   readonly ativo?: boolean;
 
   @IsOptional()

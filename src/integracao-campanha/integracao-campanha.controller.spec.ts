@@ -117,7 +117,7 @@ describe('IntegracaoCampanhaController', () => {
         id: '1',
         nome: 'Upchat',
         provedor: PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT,
-        status: 'true',
+        status: 'false',
         page: '1',
         limit: '10',
       })
@@ -138,7 +138,7 @@ describe('IntegracaoCampanhaController', () => {
       id: 1,
       nome: 'Upchat',
       provedor: PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT,
-      status: true,
+      status: false,
       page: 1,
       limit: 10,
     });

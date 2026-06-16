@@ -60,6 +60,12 @@ export class TemplateService {
     const page = query.page ?? 1;
     const limit = query.limit ?? 10;
     const skip = (page - 1) * limit;
+    const baseWhere: Prisma.TemplateWhereInput = {
+      deletedAt: null,
+      ...(query.provedor
+        ? { integracaoCampanha: { provedor: query.provedor } }
+        : {}),
+    };
 
     const where = buildPrismaWhere<Prisma.TemplateWhereInput>(
       {
@@ -68,7 +74,7 @@ export class TemplateService {
         integracaoCampanhaId: query.integracaoCampanhaId,
       },
       templateFilterConfig,
-      { deletedAt: null },
+      baseWhere,
     );
 
     const orderBy = buildPrismaOrderBy(

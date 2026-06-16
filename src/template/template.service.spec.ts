@@ -144,6 +144,7 @@ describe('TemplateService', () => {
       page: 2,
       limit: 5,
       nome: 'Template',
+      provedor: PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT,
       integracaoCampanhaId: 20,
       orderBy: 'nome',
       order: 'asc',
@@ -166,11 +167,19 @@ describe('TemplateService', () => {
     expect(prismaService.template.findMany).toHaveBeenCalledTimes(1);
     const [findManyArgs] = prismaService.template.findMany.mock.calls[0] as [
       {
+        where: Prisma.TemplateWhereInput;
         skip: number;
         take: number;
         select: Record<string, unknown>;
       },
     ];
+    expect(findManyArgs.where).toMatchObject({
+      deletedAt: null,
+      integracaoCampanha: {
+        provedor: PROVEDOR_INTEGRACAO_CAMPANHA.UPCHAT,
+      },
+      integracaoCampanhaId: 20,
+    });
     expect(findManyArgs.skip).toBe(5);
     expect(findManyArgs.take).toBe(5);
     expect(findManyArgs.select).toEqual({
