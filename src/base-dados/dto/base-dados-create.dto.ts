@@ -1,13 +1,14 @@
-import { IsString, MaxLength, ValidateNested } from 'class-validator';
+import { IsArray, ValidateNested } from 'class-validator';
 import { BaseDadosEstruturaDto } from './base-dados-estrutura.dto';
 import { Type } from 'class-transformer';
+import { IsNameField } from 'src/common/decorators/is-name-field-value.decorator';
 
 export class BaseDadosCreateDto {
-  @MaxLength(120)
-  @IsString()
+  @IsNameField(60, 'clientes')
   nome!: string;
 
-  @ValidateNested()
   @Type(() => BaseDadosEstruturaDto)
+  @IsArray()
+  @ValidateNested({ each: true })
   estrutura!: BaseDadosEstruturaDto[];
 }

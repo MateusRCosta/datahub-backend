@@ -1,24 +1,20 @@
 import { PaginationQueryDto } from 'src/common/dto/pagination-query.dto';
-import { Type } from 'class-transformer';
-import { IsInt, IsOptional, IsString, MaxLength } from 'class-validator';
+import { IsOptional } from 'class-validator';
+import { IsNameField } from 'src/common/decorators/is-name-field-value.decorator';
+import { IsIdValid } from 'src/common/decorators/is-id-value.decorator';
 export class BaseDadosFindAllQueryDto extends PaginationQueryDto {
+  @IsIdValid()
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
   readonly id?: number;
 
-  @IsOptional()
-  @IsString()
-  @MaxLength(120)
+  @IsNameField(60, 'clientes')
   readonly nome?: string;
 
+  @IsIdValid()
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
   readonly usuarioId?: number;
 
+  @IsIdValid()
   @IsOptional()
-  @Type(() => Number)
-  @IsInt()
   readonly integracaoId?: number;
 }

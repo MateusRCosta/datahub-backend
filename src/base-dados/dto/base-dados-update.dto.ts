@@ -1,17 +1,11 @@
 import { Type } from 'class-transformer';
-import {
-  IsArray,
-  IsOptional,
-  IsString,
-  MaxLength,
-  ValidateNested,
-} from 'class-validator';
+import { IsArray, IsOptional, ValidateNested } from 'class-validator';
 import { BaseDadosEstruturaDto } from './base-dados-estrutura.dto';
+import { IsNameField } from 'src/common/decorators/is-name-field-value.decorator';
 
 export class BaseDadosUpdateDto {
+  @IsNameField(60, 'clientes')
   @IsOptional()
-  @MaxLength(120)
-  @IsString()
   nome?: string;
 
   @IsOptional()

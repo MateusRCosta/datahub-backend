@@ -1,24 +1,16 @@
-import {
-  IsBoolean,
-  IsNotEmpty,
-  IsOptional,
-  IsString,
-  MaxLength,
-} from 'class-validator';
+import { IsBoolean, IsEnum, IsNotEmpty, IsOptional } from 'class-validator';
 import { TipoCampo } from '../util/type';
+import { IsNameField } from 'src/common/decorators/is-name-field-value.decorator';
 
 export class BaseDadosEstruturaDto {
+  @IsNameField(100, 'idade')
   @IsOptional()
-  @MaxLength(100)
-  @IsString()
-  @IsNotEmpty()
   rotulo?: string | null;
 
-  @IsString()
-  @MaxLength(100)
-  @IsNotEmpty()
+  @IsNameField(100, 'age')
   cabecalho!: string;
 
+  @IsEnum(TipoCampo)
   @IsOptional()
   tipo?: TipoCampo;
 
