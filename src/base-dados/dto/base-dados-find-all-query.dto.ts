@@ -8,6 +8,7 @@ export class BaseDadosFindAllQueryDto extends PaginationQueryDto {
   readonly id?: number;
 
   @IsTextField(60, 'clientes')
+  @IsOptional()
   readonly nome?: string;
 
   @IsIdValid()
