@@ -827,7 +827,7 @@ export class IntegracaoExecucaoService {
       const proximoValor = incrementaData(valorAtual, tipo);
       if (proximoValor === valorAtual) {
         throw new BadRequestException(
-          `Variavel delimitadora "${nome}" precisa estar no formato DD/MM/YYYY`,
+          `Variavel delimitadora "${nome}" possui uma data invalida para o tipo ${tipo}`,
         );
       }
 

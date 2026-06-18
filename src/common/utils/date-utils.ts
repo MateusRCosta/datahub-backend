@@ -12,12 +12,20 @@ function extraiFormatoData(
 } {
   const texto = value.trim();
 
-  const utc = texto.match(/^(\d{4})([/-])(\d{2})([/-])(\d{2})$/);
-  if (utc) {
+  if (formato === TipoCampo.UTC || formato === TipoCampo.YYYY_MM_DD) {
+    const anoPrimeiro = texto.match(/^(\d{4})([/-])(\d{2})\2(\d{2})$/);
+    if (!anoPrimeiro) {
+      return { formato: null, partes: null, separador: null };
+    }
+
     return {
       formato,
-      partes: [Number(utc[3]), Number(utc[2]), Number(utc[1])],
-      separador: utc[2] as SeparadorData,
+      partes: [
+        Number(anoPrimeiro[4]),
+        Number(anoPrimeiro[3]),
+        Number(anoPrimeiro[1]),
+      ],
+      separador: anoPrimeiro[2] as SeparadorData,
     };
   }
 
@@ -36,33 +44,9 @@ function extraiFormatoData(
       };
     }
 
-    if (formato === TipoCampo.MM_DD_YYYY) {
-      return {
-        formato: TipoCampo.MM_DD_YYYY,
-        partes: [segundo, primeiro, ano],
-        separador,
-      };
-    }
-
-    if (primeiro > 12) {
-      return {
-        formato: TipoCampo.DD_MM_YYYY,
-        partes: [primeiro, segundo, ano],
-        separador,
-      };
-    }
-
-    if (segundo > 12) {
-      return {
-        formato: TipoCampo.MM_DD_YYYY,
-        partes: [segundo, primeiro, ano],
-        separador,
-      };
-    }
-
     return {
-      formato: TipoCampo.DD_MM_YYYY,
-      partes: [primeiro, segundo, ano],
+      formato: TipoCampo.MM_DD_YYYY,
+      partes: [segundo, primeiro, ano],
       separador,
     };
   }
