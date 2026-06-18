@@ -1,5 +1,5 @@
 import { BaseDadosEstruturaDto } from 'src/base-dados/dto/base-dados-estrutura.dto';
-import { TipoCampo } from 'src/base-dados/util/type';
+import { TipoCampo } from 'src/common/types/dados.types';
 import {
   DadosNormalizado,
   ParseResultado,

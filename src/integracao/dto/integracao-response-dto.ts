@@ -1,5 +1,5 @@
 import { IsBoolean, IsEnum, IsOptional } from 'class-validator';
-import { TipoCampo } from 'src/base-dados/util/type';
+import { TipoCampo } from 'src/common/types/dados.types';
 import { IsTextField } from 'src/common/decorators/is-text-field-value.decorator';
 
 export class IntegracaoResponseDto {

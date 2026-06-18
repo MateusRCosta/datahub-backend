@@ -1,6 +1,6 @@
 import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { TipoCampo } from 'src/base-dados/util/type';
+import { TipoCampo } from 'src/common/types/dados.types';
 import { BaseDadosService } from 'src/base-dados/base-dados.service';
 import { PrismaService } from 'src/config/prisma.service';
 import { TemplateService } from 'src/template/template.service';

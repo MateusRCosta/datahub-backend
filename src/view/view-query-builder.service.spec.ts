@@ -1,6 +1,6 @@
 import { BadRequestException } from '@nestjs/common';
 import { BaseDadosService } from 'src/base-dados/base-dados.service';
-import { TipoCampo } from 'src/base-dados/util/type';
+import { TipoCampo } from 'src/common/types/dados.types';
 import { PrismaService } from 'src/config/prisma.service';
 import { MAX_DEPTH, MAX_JOINS } from './constants';
 import {

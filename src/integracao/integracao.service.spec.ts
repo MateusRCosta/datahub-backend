@@ -5,7 +5,7 @@ import {
 } from '@nestjs/common';
 import { Integracao } from '@prisma/client';
 import { AlteraStatus } from 'src/common/dto/altera-status.dto';
-import { TipoCampo } from 'src/base-dados/util/type';
+import { TipoCampo } from 'src/common/types/dados.types';
 import { IntegracaoExecucaoService } from './integracao-execucao.service';
 import { IntegracaoSchedularService } from './integracao-schedular.service';
 import { IntegracaoService } from './integracao.service';

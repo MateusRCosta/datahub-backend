@@ -25,7 +25,7 @@ import {
 } from './types/integracao.type';
 import { regexChavesVariaveis } from './constants';
 import { BaseDadosService } from 'src/base-dados/base-dados.service';
-import { TipoCampo } from 'src/base-dados/util/type';
+import { TipoCampo } from 'src/common/types/dados.types';
 
 @Injectable()
 export class IntegracaoExecucaoService {
@@ -797,6 +797,18 @@ export class IntegracaoExecucaoService {
 
     const novoContexto = contexto.map((variavel) => {
       if (variavel.nome !== nome) return variavel;
+
+      if (
+        tipo !== TipoCampo.UTC &&
+        tipo !== TipoCampo.MM_DD_YYYY &&
+        tipo !== TipoCampo.DD_MM_YYYY &&
+        tipo !== TipoCampo.YYYY_MM_DD &&
+        tipo !== TipoCampo.NUMERO
+      ) {
+        throw new BadRequestException(
+          `Variavel delimitadora "${nome}" precisa ser numerica ou uma data`,
+        );
+      }
 
       if (tipo === TipoCampo.NUMERO) {
         const atual = Number(valorAtual);

@@ -3,7 +3,7 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { NextFunction, Request, Response } from 'express';
 import request from 'supertest';
 import { Payload } from 'src/auth/types/payload';
-import { TipoCampo } from 'src/base-dados/util/type';
+import { TipoCampo } from 'src/common/types/dados.types';
 import { Permissao } from 'src/usuario/interfaces/permissao';
 import { IntegracaoController } from './integracao.controller';
 import { IntegracaoService } from './integracao.service';

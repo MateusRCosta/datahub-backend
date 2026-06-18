@@ -3,9 +3,9 @@ import {
   ValidationArguments,
   ValidationOptions,
 } from 'class-validator';
-import { TipoCampo } from 'src/base-dados/util/type';
 import { IntegracaoVariavelIncrementoDto } from 'src/integracao/dto/integracao-variavel-incremento-dto';
 import { IntegracaoVariavelDto } from 'src/integracao/dto/integracao-variavel-dto';
+import { TipoCampo } from '../types/dados.types';
 
 function incrementoPermitidoPorTipo(
   tipo: TipoCampo,
@@ -17,6 +17,7 @@ function incrementoPermitidoPorTipo(
     tipo === TipoCampo.NUMERO ||
     tipo === TipoCampo.UTC ||
     tipo === TipoCampo.MM_DD_YYYY ||
+    tipo === TipoCampo.YYYY_MM_DD ||
     tipo === TipoCampo.DD_MM_YYYY;
 
   if (!tipoPermiteIncremento) return false;

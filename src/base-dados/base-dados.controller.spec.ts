@@ -6,7 +6,7 @@ import {
 import fastifyMultipart from '@fastify/multipart';
 import { Test, TestingModule } from '@nestjs/testing';
 import request from 'supertest';
-import { TipoCampo } from './util/type';
+import { TipoCampo } from 'src/common/types/dados.types';
 import { BaseDadosController } from './base-dados.controller';
 import { BaseDadosService } from './base-dados.service';
 

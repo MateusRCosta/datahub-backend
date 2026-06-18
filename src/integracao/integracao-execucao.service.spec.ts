@@ -3,7 +3,7 @@ import { HttpService } from '@nestjs/axios';
 import { Integracao } from '@prisma/client';
 import { of } from 'rxjs';
 import { BaseDadosService } from 'src/base-dados/base-dados.service';
-import { TipoCampo } from 'src/base-dados/util/type';
+import { TipoCampo } from 'src/common/types/dados.types';
 import { PrismaService } from 'src/config/prisma.service';
 import { IntegracaoExecucaoService } from './integracao-execucao.service';
 import { METODO } from './types/integracao.type';

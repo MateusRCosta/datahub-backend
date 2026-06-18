@@ -4,7 +4,7 @@ import {
   NotFoundException,
 } from '@nestjs/common';
 import { Prisma } from '@prisma/client';
-import { TipoCampo } from 'src/base-dados/util/type';
+import { TipoCampo } from 'src/common/types/dados.types';
 import { ClienteFindAllQueryDto } from './dto/cliente-find-all-query.dto';
 import { ClientesCriacaoService } from './cliente-criacao.service';
 import { ClientesService } from './cliente.service';

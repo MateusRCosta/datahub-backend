@@ -2,7 +2,7 @@ import { BadRequestException, NotFoundException } from '@nestjs/common';
 import { CsvParser } from 'nest-csv-parser';
 import { Prisma } from '@prisma/client';
 import { ClientesService } from 'src/cliente/cliente.service';
-import { TipoCampo } from './util/type';
+import { TipoCampo } from 'src/common/types/dados.types';
 import { BaseDadosService } from './base-dados.service';
 import { BaseDadosCreateDto } from './dto/base-dados-create.dto';
 import { BaseDadosEstruturaDto } from './dto/base-dados-estrutura.dto';

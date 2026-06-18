@@ -1,5 +1,5 @@
 import { Prisma } from '@prisma/client';
-import { TipoCampo } from 'src/base-dados/util/type';
+import { TipoCampo } from 'src/common/types/dados.types';
 import { Join } from './view.types';
 
 export type BuiltQuery = {

@@ -1,37 +1,23 @@
-type FormatoData = 'DD_MM_YYYY' | 'MM_DD_YYYY' | 'UTC';
+import { TipoCampo, TipoData } from '../types/dados.types';
+
 type SeparadorData = '/' | '-';
-
-function normalizaFormatoEsperado(
-  formato?: string | null,
-): FormatoData | undefined {
-  if (
-    formato === 'DD_MM_YYYY' ||
-    formato === 'MM_DD_YYYY' ||
-    formato === 'UTC'
-  ) {
-    return formato;
-  }
-
-  return undefined;
-}
 
 function extraiFormatoData(
   value: string,
-  formatoEsperado?: string | null,
+  formato: TipoData,
 ): {
-  formato: FormatoData | null;
+  formato: TipoData | null;
   partes: [number, number, number] | null;
   separador: SeparadorData | null;
 } {
   const texto = value.trim();
-  const formatoNormalizado = normalizaFormatoEsperado(formatoEsperado);
 
-  const utc = texto.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  const utc = texto.match(/^(\d{4})([/-])(\d{2})([/-])(\d{2})$/);
   if (utc) {
     return {
-      formato: 'UTC',
+      formato,
       partes: [Number(utc[3]), Number(utc[2]), Number(utc[1])],
-      separador: '-',
+      separador: utc[2] as SeparadorData,
     };
   }
 
@@ -42,17 +28,17 @@ function extraiFormatoData(
     const ano = Number(local[4]);
     const separador = local[2] as SeparadorData;
 
-    if (formatoNormalizado === 'DD_MM_YYYY') {
+    if (formato === TipoCampo.DD_MM_YYYY) {
       return {
-        formato: 'DD_MM_YYYY',
+        formato: TipoCampo.DD_MM_YYYY,
         partes: [primeiro, segundo, ano],
         separador,
       };
     }
 
-    if (formatoNormalizado === 'MM_DD_YYYY') {
+    if (formato === TipoCampo.MM_DD_YYYY) {
       return {
-        formato: 'MM_DD_YYYY',
+        formato: TipoCampo.MM_DD_YYYY,
         partes: [segundo, primeiro, ano],
         separador,
       };
@@ -60,7 +46,7 @@ function extraiFormatoData(
 
     if (primeiro > 12) {
       return {
-        formato: 'DD_MM_YYYY',
+        formato: TipoCampo.DD_MM_YYYY,
         partes: [primeiro, segundo, ano],
         separador,
       };
@@ -68,14 +54,14 @@ function extraiFormatoData(
 
     if (segundo > 12) {
       return {
-        formato: 'MM_DD_YYYY',
+        formato: TipoCampo.MM_DD_YYYY,
         partes: [segundo, primeiro, ano],
         separador,
       };
     }
 
     return {
-      formato: 'DD_MM_YYYY',
+      formato: TipoCampo.DD_MM_YYYY,
       partes: [primeiro, segundo, ano],
       separador,
     };
@@ -100,29 +86,30 @@ function criaDataUTC(dia: number, mes: number, ano: number) {
 
 function formataData(
   date: Date,
-  formato: FormatoData,
+  formato: TipoData,
   separador: SeparadorData = '/',
 ) {
   const dia = String(date.getUTCDate()).padStart(2, '0');
   const mes = String(date.getUTCMonth() + 1).padStart(2, '0');
   const ano = String(date.getUTCFullYear());
 
-  if (formato === 'MM_DD_YYYY') {
+  if (formato === TipoCampo.MM_DD_YYYY) {
     return `${mes}${separador}${dia}${separador}${ano}`;
   }
 
-  if (formato === 'UTC') {
+  if (formato === TipoCampo.YYYY_MM_DD) {
+    return `${ano}${separador}${mes}${separador}${dia}`;
+  }
+
+  if (formato === TipoCampo.UTC) {
     return `${ano}-${mes}-${dia}`;
   }
 
   return `${dia}${separador}${mes}${separador}${ano}`;
 }
 
-export function incrementaData(
-  value: string,
-  formatoEsperado?: string | null,
-): string {
-  const extraido = extraiFormatoData(value, formatoEsperado);
+export function incrementaData(value: string, formato: TipoData): string {
+  const extraido = extraiFormatoData(value, formato);
   if (!extraido.formato || !extraido.partes) return value;
 
   const [dia, mes, ano] = extraido.partes;
@@ -142,9 +129,9 @@ export function hojeUTC(): Date {
 
 export function dataDDMMYYYYMaiorQueHoje(
   value: string,
-  formatoEsperado?: string | null,
+  formato: TipoData,
 ): boolean {
-  const extraido = extraiFormatoData(value, formatoEsperado);
+  const extraido = extraiFormatoData(value, formato);
   if (!extraido.formato || !extraido.partes) return false;
 
   const [dia, mes, ano] = extraido.partes;
