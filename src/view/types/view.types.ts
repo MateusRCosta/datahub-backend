@@ -3,6 +3,8 @@ import { Campo } from 'src/common/types/dados.types';
 
 export enum TIPO_JOIN {
   INNER = 'INNER',
+  LEFT = 'LEFT',
+  RIGHT = 'RIGHT',
 }
 
 export enum OPERADOR {
@@ -33,7 +35,7 @@ export type QueryView = {
   from: From;
   joins?: Join[];
   select?: Select[];
-  groupFilter?: GroupFilter[];
+  groupFilter?: GroupFilter;
 };
 
 export type From = {

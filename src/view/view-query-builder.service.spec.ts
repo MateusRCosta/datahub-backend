@@ -41,17 +41,15 @@ describe('ViewQueryBuilderService', () => {
         campos: [{ campo: 'email', rotulo: 'Email' }],
       },
     ],
-    groupFilter: [
-      {
-        type: TIPO_FILTRO.FILTER,
-        filter: {
-          joinIndex: 0,
-          campo: 'idade',
-          operador: OPERADOR.GREATER_EQUAL,
-          valor: 18,
-        },
+    groupFilter: {
+      type: TIPO_FILTRO.FILTER,
+      filter: {
+        joinIndex: 0,
+        campo: 'idade',
+        operador: OPERADOR.GREATER_EQUAL,
+        valor: 18,
       },
-    ],
+    },
   };
 
   beforeEach(() => {
@@ -128,44 +126,54 @@ describe('ViewQueryBuilderService', () => {
     expect(result.params).toEqual([10, 18, [10, 20]]);
   });
 
-  it('build monta join inner', async () => {
-    baseDadosService.retornaEstruturasPorIds.mockResolvedValue([
-      { id: 10, estrutura: estruturaBase },
-      {
-        id: 20,
-        estrutura: [
-          { cabecalho: 'email', tipo: TipoCampo.EMAIL },
-          { cabecalho: 'telefone', tipo: TipoCampo.TELEFONE },
+  it.each([TIPO_JOIN.INNER, TIPO_JOIN.LEFT, TIPO_JOIN.RIGHT])(
+    'build monta join %s',
+    async (tipo) => {
+      baseDadosService.retornaEstruturasPorIds.mockResolvedValue([
+        { id: 10, estrutura: estruturaBase },
+        {
+          id: 20,
+          estrutura: [
+            { cabecalho: 'email', tipo: TipoCampo.EMAIL },
+            { cabecalho: 'telefone', tipo: TipoCampo.TELEFONE },
+          ],
+        },
+      ]);
+      const queryComJoin: QueryView = {
+        from: { baseDadosId: 10 },
+        joins: [
+          {
+            baseDadosIdJoin: 20,
+            campoFrom: 'email',
+            campoJoin: 'email',
+            tipo,
+          },
         ],
-      },
-    ]);
-    const queryComJoin: QueryView = {
-      from: { baseDadosId: 10 },
-      joins: [
-        {
-          baseDadosIdJoin: 20,
-          campoFrom: 'email',
-          campoJoin: 'email',
-          tipo: TIPO_JOIN.INNER,
-        },
-      ],
-      select: [
-        {
-          baseDadosId: 20,
-          joinIndex: 1,
-          campos: [{ campo: 'telefone', rotulo: 'Telefone' }],
-        },
-      ],
-    };
+        select: [
+          {
+            baseDadosId: 20,
+            joinIndex: 1,
+            campos: [{ campo: 'telefone', rotulo: 'Telefone' }],
+          },
+        ],
+      };
 
-    const result = await service.build(queryComJoin);
+      const result = await service.build(queryComJoin);
 
-    expect(result.sql).toContain('INNER JOIN "clientes" c1');
-    expect(result.sql).toContain(
-      'AND c0."dados" ->> \'email\' = c1."dados" ->> \'email\'',
-    );
-    expect(result.params).toEqual([20, 10]);
-  });
+      expect(result.sql).toContain(`${tipo} JOIN "clientes" c1`);
+      expect(result.sql).toContain(
+        'AND c0."dados" ->> \'email\' = c1."dados" ->> \'email\'',
+      );
+      expect(result.params).toEqual(
+        tipo === TIPO_JOIN.RIGHT ? [10, 20] : [20, 10],
+      );
+      if (tipo === TIPO_JOIN.RIGHT) {
+        expect(result.sql).toContain(
+          'FROM (SELECT * FROM "clientes" WHERE "baseDeDadosId" = $1 AND "deletedAt" IS NULL) c0',
+        );
+      }
+    },
+  );
 
   it('build retorna select vazio quando nao ha campos', async () => {
     await expect(service.build({ from: { baseDadosId: 10 } })).resolves.toEqual(
@@ -233,7 +241,7 @@ describe('ViewQueryBuilderService', () => {
     await expect(
       service.build({
         from: { baseDadosId: 10 },
-        groupFilter: [current],
+        groupFilter: current,
       }),
     ).rejects.toThrow(BadRequestException);
   });

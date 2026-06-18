@@ -125,13 +125,7 @@ export class ViewQueryBuilderService {
     }
 
     if (query.groupFilter) {
-      this.validarGruposFiltro(query.groupFilter);
-    }
-  }
-
-  private validarGruposFiltro(groupFilters: GroupFilter[]): void {
-    for (const groupFilter of groupFilters) {
-      this.validarProfundidade(groupFilter);
+      this.validarProfundidade(query.groupFilter);
     }
   }
 
@@ -291,6 +285,11 @@ export class ViewQueryBuilderService {
   private construirFrom(query: QueryView, ctx: QueryContext): string {
     const alias = this.obterAlias(ctx, query.from.baseDadosId, 0);
 
+    if (query.joins?.some((join) => join.tipo === TIPO_JOIN.RIGHT)) {
+      const baseDadosParam = this.adicionarParam(ctx, query.from.baseDadosId);
+      return `FROM (SELECT * FROM "clientes" WHERE "baseDeDadosId" = ${baseDadosParam} AND "deletedAt" IS NULL) ${alias}`;
+    }
+
     return `FROM "clientes" ${alias}`;
   }
 
@@ -309,7 +308,7 @@ export class ViewQueryBuilderService {
     joinIndex: number,
     ctx: QueryContext,
   ): string {
-    if (join.tipo !== TIPO_JOIN.INNER) {
+    if (!Object.values(TIPO_JOIN).includes(join.tipo)) {
       throw new BadRequestException(
         `Tipo de join nao suportado: ${String(join.tipo)}`,
       );
@@ -327,7 +326,7 @@ export class ViewQueryBuilderService {
     this.obterTipoCampo(ctx, join.baseDadosIdJoin, join.campoJoin);
 
     return [
-      `INNER JOIN "clientes" ${joinAlias}`,
+      `${join.tipo} JOIN "clientes" ${joinAlias}`,
       `ON ${joinAlias}."baseDeDadosId" = ${baseDadosParam}`,
       `AND ${joinAlias}."deletedAt" IS NULL`,
       `AND ${fromAlias}."dados" ->> '${campoFrom}' = ${joinAlias}."dados" ->> '${campoJoin}'`,
@@ -338,33 +337,22 @@ export class ViewQueryBuilderService {
 
   private construirWhere(query: QueryView, ctx: QueryContext): string {
     const rootAlias = this.obterAlias(ctx, query.from.baseDadosId, 0);
-    const rootParam = this.adicionarParam(ctx, query.from.baseDadosId);
-    const predicados = [
-      `${rootAlias}."baseDeDadosId" = ${rootParam}`,
-      `${rootAlias}."deletedAt" IS NULL`,
-    ];
+    const hasRightJoin = query.joins?.some(
+      (join) => join.tipo === TIPO_JOIN.RIGHT,
+    );
+    const predicados = hasRightJoin
+      ? ['TRUE']
+      : [
+          `${rootAlias}."baseDeDadosId" = ${this.adicionarParam(ctx, query.from.baseDadosId)}`,
+          `${rootAlias}."deletedAt" IS NULL`,
+        ];
 
-    if (query.groupFilter && query.groupFilter.length > 0) {
-      predicados.push(this.construirGruposFiltroRaiz(query.groupFilter, ctx));
+    if (query.groupFilter) {
+      const filtro = this.construirGrupoFiltro(query.groupFilter, ctx, 1);
+      if (filtro) predicados.push(`(${filtro})`);
     }
 
     return `WHERE ${predicados.join(' AND ')}`;
-  }
-
-  private construirGruposFiltroRaiz(
-    groupFilters: GroupFilter[],
-    ctx: QueryContext,
-  ): string {
-    if (groupFilters.length === 0) {
-      return '';
-    }
-
-    let filtros = groupFilters.map((gf) =>
-      this.construirGrupoFiltro(gf, ctx, 1),
-    );
-
-    filtros = filtros.filter((filtro) => filtro !== null);
-    return `(${filtros.join(' AND ')})`;
   }
 
   private construirGrupoFiltro(

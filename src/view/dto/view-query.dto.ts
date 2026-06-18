@@ -115,8 +115,7 @@ export class ViewQueryDto {
   readonly select?: SelectDto[];
 
   @IsOptional()
-  @IsArray()
-  @ValidateNested({ each: true })
+  @ValidateNested()
   @Type(() => GroupFilterDto)
-  readonly groupFilter?: GroupFilterDto[];
+  readonly groupFilter?: GroupFilterDto;
 }
