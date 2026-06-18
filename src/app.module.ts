@@ -15,6 +15,7 @@ import { TemplateModule } from './template/template.module';
 import { CampanhaModule } from './campanha/campanha.module';
 import { APP_INTERCEPTOR } from '@nestjs/core';
 import { LoggingInterceptor } from './config/logging-interceptor';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -30,6 +31,7 @@ import { LoggingInterceptor } from './config/logging-interceptor';
     ViewModule,
     TemplateModule,
     CampanhaModule,
+    DashboardModule,
   ],
   providers: [
     {
