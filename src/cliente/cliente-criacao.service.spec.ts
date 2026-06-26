@@ -211,6 +211,25 @@ describe('ClientesCriacaoService', () => {
     expect(prisma.$executeRaw).toHaveBeenCalledTimes(1);
   });
 
+  it('revalidaClientesDaBase divide raw update em lotes', async () => {
+    const clientes = Array.from({ length: 1001 }, (_, index) => ({
+      id: index + 1,
+      dados: {
+        email: `cliente${index}@example.com`,
+        nome: `Cliente ${index}`,
+      },
+    }));
+
+    prisma.cliente.findMany.mockResolvedValue(clientes);
+    prisma.$executeRaw.mockResolvedValue(1000);
+
+    await expect(
+      service.revalidaClientesDaBase(prisma as never, 10, estrutura),
+    ).resolves.toBe(1001);
+
+    expect(prisma.$executeRaw).toHaveBeenCalledTimes(2);
+  });
+
   it('geraHash gera o mesmo hash independentemente da ordem das chaves', () => {
     const primeiro = service.geraHash({ nome: 'Joao', email: 'a@example.com' });
     const segundo = service.geraHash({ email: 'a@example.com', nome: 'Joao' });

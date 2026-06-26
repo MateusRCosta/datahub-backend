@@ -4,6 +4,13 @@ import { createHash } from 'crypto';
 import { normalizaDadosCliente } from './utils/dados-normalizer';
 import { BaseDadosEstruturaDto } from 'src/base-dados/dto/base-dados-estrutura.dto';
 
+const CLIENTES_REVALIDACAO_BATCH_SIZE = 1000;
+
+type ClienteParaRevalidar = {
+  id: number;
+  dados: Prisma.JsonValue;
+};
+
 @Injectable()
 export class ClientesCriacaoService {
   async criaOuAtualizaClientesDaBase(
@@ -191,7 +198,7 @@ export class ClientesCriacaoService {
     prisma: Prisma.TransactionClient,
     baseDeDadosId: number,
     estrutura: BaseDadosEstruturaDto[],
-  ) {
+  ): Promise<number> {
     const clientes = await prisma.cliente.findMany({
       where: {
         baseDeDadosId,
@@ -205,6 +212,28 @@ export class ClientesCriacaoService {
 
     const dataAtualizacao = new Date();
 
+    for (
+      let inicio = 0;
+      inicio < clientes.length;
+      inicio += CLIENTES_REVALIDACAO_BATCH_SIZE
+    ) {
+      await this.revalidaClientesEmLote(
+        prisma,
+        clientes.slice(inicio, inicio + CLIENTES_REVALIDACAO_BATCH_SIZE),
+        estrutura,
+        dataAtualizacao,
+      );
+    }
+
+    return clientes.length;
+  }
+
+  private async revalidaClientesEmLote(
+    prisma: Prisma.TransactionClient,
+    clientes: ClienteParaRevalidar[],
+    estrutura: BaseDadosEstruturaDto[],
+    dataAtualizacao: Date,
+  ): Promise<void> {
     const dadosCases: Prisma.Sql[] = [];
     const validacaoCases: Prisma.Sql[] = [];
     const ids: number[] = [];
@@ -243,7 +272,6 @@ export class ClientesCriacaoService {
         "updatedAt" = ${dataAtualizacao}
       WHERE id IN (${Prisma.join(ids)});
     `;
-    return clientes.length;
   }
 
   geraHash(dados: Record<string, unknown>) {
